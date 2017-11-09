@@ -98,10 +98,12 @@
       <HintPath>..\packages\Microsoft.AspNetCore.WebUtilities.1.1.2\lib\net451\Microsoft.AspNetCore.WebUtilities.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices.Proxy, Version=1.0.2.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Azure.Devices.Proxy.1.0.2.1\lib\net46\Microsoft.Azure.Devices.Proxy.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\.nuget\LocalPackages\Microsoft.Azure.Devices.Proxy.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices.Proxy.Opc.Ua, Version=1.0.2.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Azure.Devices.Proxy.Opc.Ua.1.0.2.1\lib\net46\Microsoft.Azure.Devices.Proxy.Opc.Ua.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\.nuget\LocalPackages\Microsoft.Azure.Devices.Proxy.Opc.Ua.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp">
       <Private>True</Private>
