@@ -19,7 +19,7 @@ function CreateStationUrl
     # Create a station uri from the station configuration
     $port = $station.Simulation.Port
     if ($port -eq $null) { $port = "51210" }
-    $opcUrl = "opc.tcp://" + $station.Simulation.Id.ToLower() + "." + $net + ":" + $port + "/UA-MMMMMMMM/" + $station.Simulation.Path
+    $opcUrl = "opc.tcp://" + $station.Simulation.Id.ToLower() + "." + $net + ":" + $port + "/UA/" + $station.Simulation.Path
     return $opcUrl
 }
 Function CreateProductionLineStationUrl
@@ -53,9 +53,9 @@ Function FixWebAppPackage()
     #    [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipArchive, $browserEndpointsFullName, $fullPath) | Out-Null
     #}
     #$zipArchive.Dispose()
-    Remove-Item $browserEndpointsFullName -Force
+   # Remove-Item $browserEndpointsFullName -Force
 }
-
+Remove-Item $applicationFileName -Force
 Copy-Item $originalFileName $applicationFileName -Force
 # Patch the endpoint configuration file. Grab a node we import into the patched file
 $xml = [xml] (Get-Content $originalFileName)
