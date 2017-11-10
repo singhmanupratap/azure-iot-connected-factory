@@ -1,6 +1,6 @@
 ﻿# Use a copy of the original to patch
-$script:IoTSuiteRootPath = "$(Build.ArtifactStagingDirectory)"
-$script:WebAppLocalPath = "$(Build.ArtifactStagingDirectory)"
+$script:IoTSuiteRootPath = "$artifactStagingDirectory"
+$script:WebAppLocalPath = "$artifactStagingDirectory"
 #$script:IoTSuiteRootPath = "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory"
 $script:WebAppPath = "$script:IoTSuiteRootPath\WebApp"
 $script:TopologyDescription = "$script:WebAppPath/Contoso/Topology/ContosoTopologyDescription.json"
@@ -56,7 +56,7 @@ Copy-Item $originalFileName $applicationFileName -Force
 # Patch the endpoint configuration file. Grab a node we import into the patched file
 $xml = [xml] (Get-Content $originalFileName)
 
-Write-Output $xml
+
 $configuredEndpoint = $xml.ConfiguredEndpointCollection.Endpoints.ChildNodes[0]
 
 $xml = [xml] (Get-Content $applicationFileName)
@@ -96,4 +96,4 @@ $xml.Save($applicationFileName)
 
 FixWebAppPackage $script:WebAppLocalPath
 
-Write-Output $script:WebAppLocalPath
+Write-Output "XML File content" $xml
