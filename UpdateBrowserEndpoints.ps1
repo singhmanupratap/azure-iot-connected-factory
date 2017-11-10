@@ -2,13 +2,12 @@
     [string]$ArtifactStagingDirectory = "",
     [string]$BuildId = ""
 )
-Write-Output "Build Id #########" $BuildId
 # Use a copy of the original to patch
 $script:IoTSuiteRootPath = "$artifactStagingDirectory"
 $script:WebAppLocalPath = "$artifactStagingDirectory"
 #$script:IoTSuiteRootPath = "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory"
 $script:WebAppPath = "$script:IoTSuiteRootPath\WebApp"
-$script:TopologyDescription = "$script:WebAppPath/Contoso/Topology/ContosoTopologyDescription.json"
+$script:TopologyDescription = "$script:WebAppPath\Contoso\Topology\ContosoTopologyDescription.json"
 $originalFileName = "$script:IoTSuiteRootPath\WebApp\OPC.Ua.SampleClient.Endpoints.xml"
 $applicationFileName = "$script:IoTSuiteRootPath\WebApp\OPC.Ua.Browser.Endpoints.xml"
 function CreateStationUrl
@@ -20,7 +19,7 @@ function CreateStationUrl
     # Create a station uri from the station configuration
     $port = $station.Simulation.Port
     if ($port -eq $null) { $port = "51210" }
-    $opcUrl = "opc.tcp://" + $station.Simulation.Id.ToLower() + "." + $net + ":" + $port + "/UA/" + $station.Simulation.Path
+    $opcUrl = "opc.tcp://" + $station.Simulation.Id.ToLower() + "." + $net + ":" + $port + "/UA-MMMMMMMM/" + $station.Simulation.Path
     return $opcUrl
 }
 Function CreateProductionLineStationUrl
