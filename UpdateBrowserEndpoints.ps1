@@ -1,5 +1,6 @@
 ﻿# Use a copy of the original to patch
-$script:IoTSuiteRootPath = $(Build.ArtifactStagingDirectory)
+$script:IoTSuiteRootPath = "$(Build.ArtifactStagingDirectory)"
+$script:WebAppLocalPath = "$(Build.ArtifactStagingDirectory)"
 #$script:IoTSuiteRootPath = "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory"
 $script:WebAppPath = "$script:IoTSuiteRootPath\WebApp"
 $script:TopologyDescription = "$script:WebAppPath/Contoso/Topology/ContosoTopologyDescription.json"
@@ -25,6 +26,30 @@ Function CreateProductionLineStationUrl
     )
     $station = ($productionLine.Stations | where { $_.Simulation.Type -eq $type})
     return CreateStationUrl -net $productionLine.Simulation.Network.ToLowerInvariant() -station $station
+}
+
+Function FixWebAppPackage()
+{
+    Param(
+        [Parameter(Mandatory=$true,Position=0)] [string] $filePath
+    )
+
+    # Set path correct
+    $browserEndpointsName = "OPC.Ua.Browser.Endpoints.xml"
+    $browserEndpointsFullName = "$script:IoTSuiteRootPath/WebApp/$browserEndpointsName"
+    #$zipfile = Get-Item "$filePath"
+    #[System.IO.Compression.ZipArchive]$zipArchive = [System.IO.Compression.ZipFile]::Open($zipfile.FullName, "Update")
+
+    #$entries = $zipArchive.Entries | Where-Object { $_.FullName -match ".*$browserEndpointsName" } 
+    #foreach ($entry in $entries)
+    #{ 
+     #   $fullPath = $entry.FullName
+     #   Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Found '{0}' in archive" -f $fullPath)
+      #  $entry.Delete()
+    #    [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipArchive, $browserEndpointsFullName, $fullPath) | Out-Null
+    #}
+    #$zipArchive.Dispose()
+    Remove-Item $browserEndpointsFullName -Force
 }
 
 Copy-Item $originalFileName $applicationFileName -Force
@@ -68,3 +93,7 @@ for ($i=0; $i -lt $nodes.Count; )
 }
 
 $xml.Save($applicationFileName)
+
+FixWebAppPackage $script:WebAppLocalPath
+
+Write-Output $script:WebAppLocalPath
