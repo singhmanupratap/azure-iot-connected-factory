@@ -2063,8 +2063,8 @@ $EXPECTED_PSCX_MODULE_VERSION = "3.2.2"
 $EXPECTED_POSHSSH_MODULE_VERSION = "1.7.7"
 
 # Variable initialization
-$script:IoTSuiteRootPath = Split-Path $MyInvocation.MyCommand.Path
-#$script:IoTSuiteRootPath = $BuildRepositoryLocalPath
+#$script:IoTSuiteRootPath = Split-Path $MyInvocation.MyCommand.Path
+$script:IoTSuiteRootPath = $BuildRepositoryLocalPath
 $script:SimulationPath = "$script:IoTSuiteRootPath/Simulation"
 $script:CreateCertsPath = "$script:SimulationPath/Factory/CreateCerts"
 $script:WebAppPath = "$script:IoTSuiteRootPath/WebApp"
@@ -2106,44 +2106,42 @@ $script:DeploymentName = $script:DeploymentName.ToLowerInvariant()
 Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Name of the deployment is '{0}'" -f $script:DeploymentName)
 
 # Initialize available Azure Cloud locations
-#####
-#switch($script:AzureEnvironmentName)
-#{
-#    "AzureCloud" {
-#        if ((Get-AzureRMEnvironment AzureCloud) -eq $null)
-#        {
-#            Write-Verbose  "$(Get-Date –f $TIME_STAMP_FORMAT) - Can not find AzureCloud environment. Adding it."
-#            Add-AzureRMEnvironment –Name AzureCloud -EnableAdfsAuthentication $False -ActiveDirectoryServiceEndpointResourceId https://management.core.windows.net/ -GalleryUrl https://gallery.azure.com/ -ServiceManagementUrl https://management.core.windows.net/ -SqlDatabaseDnsSuffix .database.windows.net -StorageEndpointSuffix core.windows.net -ActiveDirectoryAuthority https://login.microsoftonline.com/ -GraphUrl https://graph.windows.net/ -trafficManagerDnsSuffix trafficmanager.net -AzureKeyVaultDnsSuffix vault.azure.net -AzureKeyVaultServiceEndpointResourceId https://vault.azure.net -ResourceManagerUrl https://management.azure.com/ -ManagementPortalUrl http://go.microsoft.com/fwlink/?LinkId=254433
-#        }
+switch($script:AzureEnvironmentName)
+{
+    "AzureCloud" {
+        if ((Get-AzureRMEnvironment AzureCloud) -eq $null)
+        {
+            Write-Verbose  "$(Get-Date –f $TIME_STAMP_FORMAT) - Can not find AzureCloud environment. Adding it."
+            Add-AzureRMEnvironment –Name AzureCloud -EnableAdfsAuthentication $False -ActiveDirectoryServiceEndpointResourceId https://management.core.windows.net/ -GalleryUrl https://gallery.azure.com/ -ServiceManagementUrl https://management.core.windows.net/ -SqlDatabaseDnsSuffix .database.windows.net -StorageEndpointSuffix core.windows.net -ActiveDirectoryAuthority https://login.microsoftonline.com/ -GraphUrl https://graph.windows.net/ -trafficManagerDnsSuffix trafficmanager.net -AzureKeyVaultDnsSuffix vault.azure.net -AzureKeyVaultServiceEndpointResourceId https://vault.azure.net -ResourceManagerUrl https://management.azure.com/ -ManagementPortalUrl http://go.microsoft.com/fwlink/?LinkId=254433
+        }
 
-#        # Initialize public cloud suffixes.
-#        $script:IotHubSuffix = "azure-devices.net"
-#        $script:WebsiteSuffix = "azurewebsites.net"
-#        $script:RdxSuffix = "timeseries.azure.com"
-#        $script:docdbSuffix = "documents.azure.com"
-#        # Set locations were all resource are available. This might need to get updated if resources are deployed to more locations.
-#        $script:AzureLocations = @("West US", "North Europe", "West Europe")
-#    }
-#    default {throw ("'{0}' is not a supported Azure Cloud environment" -f $script:AzureEnvironmentName)}
-#}
-#$script:AzureEnvironment = Get-AzureEnvironment $script:AzureEnvironmentName
+        # Initialize public cloud suffixes.
+        $script:IotHubSuffix = "azure-devices.net"
+        $script:WebsiteSuffix = "azurewebsites.net"
+        $script:RdxSuffix = "timeseries.azure.com"
+        $script:docdbSuffix = "documents.azure.com"
+        # Set locations were all resource are available. This might need to get updated if resources are deployed to more locations.
+        $script:AzureLocations = @("West US", "North Europe", "West Europe")
+    }
+    default {throw ("'{0}' is not a supported Azure Cloud environment" -f $script:AzureEnvironmentName)}
+}
+$script:AzureEnvironment = Get-AzureEnvironment $script:AzureEnvironmentName
 
-## Set environment specific variables.
-#if ($script:DeploymentName -eq "local")
-#{
-#    $script:SuiteName = $env:USERNAME + "ConnfactoryLocal"
-#    $script:SuiteType = "Connectedfactory"
-#    $script:WebAppHomepage = "https://localhost:44305/"
-#    $script:CloudDeploy = $false
-#}
-#else
-#{
-#    $script:SuiteName = $script:DeploymentName
-#    $script:SuiteType = "Connectedfactory"
-#    $script:WebAppHomepage = "https://{0}.{1}/" -f $script:DeploymentName, $script:WebsiteSuffix
-#    $script:CloudDeploy = $true
-#}
-#####
+# Set environment specific variables.
+if ($script:DeploymentName -eq "local")
+{
+    $script:SuiteName = $env:USERNAME + "ConnfactoryLocal"
+    $script:SuiteType = "Connectedfactory"
+    $script:WebAppHomepage = "https://localhost:44305/"
+    $script:CloudDeploy = $false
+}
+else
+{
+    $script:SuiteName = $script:DeploymentName
+    $script:SuiteType = "Connectedfactory"
+    $script:WebAppHomepage = "https://{0}.{1}/" -f $script:DeploymentName, $script:WebsiteSuffix
+    $script:CloudDeploy = $true
+}
 $script:WebAppIdentifierUri = $script:WebAppHomepage + $script:SuiteName
 $script:WebAppDisplayName = $script:SuiteName + "-app"
 $script:DeploymentTemplateFile = "$script:DeploymentConfigPath/ConnectedfactoryMapKey.json"
@@ -2191,97 +2189,94 @@ if ($script:Command -eq "clean")
 }
 
 # Build everything for build and updatesimulation commands
-####
-#if ($script:Command -eq "build" -or $script:Command -eq "updatesimulation")
-#{
-#    # Build the solution
-#    Build
+if ($script:Command -eq "build" -or $script:Command -eq "updatesimulation")
+{
+    # Build the solution
+    Build
 
-#    # Package and upload solution WebPackages
-#    Package
-#    FinalizeWebPackages
+    # Package and upload solution WebPackages
+    Package
+    FinalizeWebPackages
 
-#    # Build the simulation
-#    SimulationBuild
+    # Build the simulation
+    SimulationBuild
 
-#    # Build simulation scripts
-#    SimulationBuildScripts
+    # Build simulation scripts
+    SimulationBuildScripts
 
-#    # Compressed simulation binaries
-#    Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Build compressed archive"
-#    Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
-#    Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
-#    Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
-#    Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
+    # Compressed simulation binaries
+    Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Build compressed archive"
+    Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
+    Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
+    Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
+    Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
 
-#    # We are done in case of a build command
-#    if ($script:Command -eq "build")
-#    {
-#        exit
-#    }
-#}
+    # We are done in case of a build command
+    if ($script:Command -eq "build")
+    {
+        exit
+    }
+}
 
-#if ($script:Command -eq "delete")
-#{
-#    # Remove the resource group.
-#    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check if resource group with name '{0}' exists." -f $script:SuiteName)
-#    $resourceGroup = Get-AzureRmResourceGroup -Name $script:SuiteName -ErrorAction SilentlyContinue
-#    if ($resourceGroup -ne $null)
-#    {
-#        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Resource group found. Remove it. This may take a while.")
-#        Remove-AzureRmResourceGroup -Name $script:SuiteName -Force -ErrorAction SilentlyContinue | Out-Null
-#    }
-#    else
-#    {
-#        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Cannot find resource group name '{0}'. Have you selected the correct subscription by Select-AzureRmSubscription?" -f $script:SuiteName)
-#        throw ("Cannot find resource group name '{0}'. Do you have selected the correct subscription by Select-AzureRmSubscription?" -f $script:SuiteName)
-#    }
+if ($script:Command -eq "delete")
+{
+    # Remove the resource group.
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check if resource group with name '{0}' exists." -f $script:SuiteName)
+    $resourceGroup = Get-AzureRmResourceGroup -Name $script:SuiteName -ErrorAction SilentlyContinue
+    if ($resourceGroup -ne $null)
+    {
+        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Resource group found. Remove it. This may take a while.")
+        Remove-AzureRmResourceGroup -Name $script:SuiteName -Force -ErrorAction SilentlyContinue | Out-Null
+    }
+    else
+    {
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Cannot find resource group name '{0}'. Have you selected the correct subscription by Select-AzureRmSubscription?" -f $script:SuiteName)
+        throw ("Cannot find resource group name '{0}'. Do you have selected the correct subscription by Select-AzureRmSubscription?" -f $script:SuiteName)
+    }
 
-#    # Remove the WebApp.
-#    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check if WebApp with the following IdentifierUri'{0}' exists" -f $script:WebAppIdentifierUri)
-#    $webApp = Get-AzureRmADApplication -IdentifierUri $script:WebAppIdentifierUri  -ErrorAction SilentlyContinue
-#    if ($webApp -ne $null)
-#    {
-#        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - WebApp found. Remove it.")
-#        Remove-AzureRmADApplication -ObjectId $webApp.ObjectId -Force -ErrorAction SilentlyContinue
-#    }
+    # Remove the WebApp.
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check if WebApp with the following IdentifierUri'{0}' exists" -f $script:WebAppIdentifierUri)
+    $webApp = Get-AzureRmADApplication -IdentifierUri $script:WebAppIdentifierUri  -ErrorAction SilentlyContinue
+    if ($webApp -ne $null)
+    {
+        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - WebApp found. Remove it.")
+        Remove-AzureRmADApplication -ObjectId $webApp.ObjectId -Force -ErrorAction SilentlyContinue
+    }
 
-#    # Delete the deployment settings file.
-#    Write-Output Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Delete existing settings file '{0}'" -f $script:DeploymentSettingsFile)
-#    Remove-Item $script:DeploymentSettingsFile -Force -ErrorAction SilentlyContinue | Out-Null
+    # Delete the deployment settings file.
+    Write-Output Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Delete existing settings file '{0}'" -f $script:DeploymentSettingsFile)
+    Remove-Item $script:DeploymentSettingsFile -Force -ErrorAction SilentlyContinue | Out-Null
 
-#    # Delete deployment certificates.
-#    Write-Output Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Delete existing certificates")
-#    Remove-Item -Recurse -Path "$script:CreateCertsPath/certs/$script:DeploymentName" -Force -ErrorAction SilentlyContinue | Out-Null
-#    Remove-Item -Recurse -Path "$script:CreateCertsPath/private/$script:DeploymentName" -Force -ErrorAction SilentlyContinue | Out-Null
-#    exit
-#}
+    # Delete deployment certificates.
+    Write-Output Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Delete existing certificates")
+    Remove-Item -Recurse -Path "$script:CreateCertsPath/certs/$script:DeploymentName" -Force -ErrorAction SilentlyContinue | Out-Null
+    Remove-Item -Recurse -Path "$script:CreateCertsPath/private/$script:DeploymentName" -Force -ErrorAction SilentlyContinue | Out-Null
+    exit
+}
 
-## Initialize deployment settings.
-#Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - InitializeDeployment settings for'{0}'" -f $script:DeploymentName)
-#InitializeDeploymentSettings
+# Initialize deployment settings.
+Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - InitializeDeployment settings for'{0}'" -f $script:DeploymentName)
+InitializeDeploymentSettings
 
-## Initialize Azure environment, but not for updatesimulation command.
-#if ($script:Command -ne "updatesimulation")
-#{
-#    # Clear DNS
-#    ClearDnsCache
+# Initialize Azure environment, but not for updatesimulation command.
+if ($script:Command -ne "updatesimulation")
+{
+    # Clear DNS
+    ClearDnsCache
 
-#    # Sets Azure Account, Location, Name validation and AAD application.
-#    InitializeEnvironment 
-#}
+    # Sets Azure Account, Location, Name validation and AAD application.
+    InitializeEnvironment 
+}
 
-
-## Generate and persist VM admin password.
-#if ([string]::IsNullOrEmpty($script:VmAdminPassword))
-#{
-#    $script:VmAdminPassword = GetOrSetEnvSetting "VmAdminPassword" "RandomPassword"
-#}
-#else
-#{
-#    PutEnvSetting "VmAdminPassword" $script:VmAdminPassword
-#}
-####
+# Generate and persist VM admin password.
+if ([string]::IsNullOrEmpty($script:VmAdminPassword))
+{
+    $script:VmAdminPassword = GetOrSetEnvSetting "VmAdminPassword" "RandomPassword"
+}
+else
+{
+    PutEnvSetting "VmAdminPassword" $script:VmAdminPassword
+}
 
 # Initialize used SKUs
 if ($script:LowCost)
@@ -2325,104 +2320,103 @@ else
     $script:RdxEnvironmentSkuName = "S1"
     $script:KeyVaultSkuName = "Standard"
 }
-####
-## Detect if DNS server always return fake response which corrupts DNS name availability check.
-#DetectIoTHubDNS
 
-## Initialize cloud related variables
-#$script:SuiteExists = (Find-AzureRmResourceGroup -Tag @{"IotSuiteType" = $script:SuiteType} | Where-Object {$_.name -eq $script:SuiteName -or $_.ResourceGroupName -eq $script:SuiteName}) -ne $null
-#Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Get resource group name for suiteName '{0}' and suiteType '{1}'" -f $script:SuiteName, $script:SuiteType)
-#$script:ResourceGroupName = (GetResourceGroup).ResourceGroupName
-#Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Resourcegroup name is '{0}'" -f $script:ResourceGroupName)
-#$script:StorageAccount = GetAzureStorageAccount
-#$script:StorageAccountBlobEndpoint = (Get-AzureRmStorageAccount  -ResourceGroupName $script:ResourceGroupName -Name $script:StorageAccount.StorageAccountName).PrimaryEndpoints.Blob
-#$script:IoTHubName = GetAzureIotHubName
-#$script:VmName = GetAzureVmName
-#$script:RdxEnvironmentName = GetAzureRdxName
-#$script:ArmParameter = @{}
+# Detect if DNS server always return fake response which corrupts DNS name availability check.
+DetectIoTHubDNS
 
-## Update the simulation in the VM
-#if ($script:Command -eq "updatesimulation")
-#{
-#    # Check if resource group and VM exists.
-#    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Validate resource group name '{0}' existence" -f $script:ResourceGroupName)
-#    $resourceGroup = Get-AzureRmResourceGroup -Name $script:ResourceGroupName -ErrorAction SilentlyContinue
-#    if ($resourceGroup -eq $null)
-#    {
-#        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Resource group {0} does not exist." -f $script:ResourceGroupName)
-#        throw ("Resource group {0} does not exist." -f $script:ResourceGroupName)
-#    }
-#    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check if VM exists in resource group '{0}'" -f $script:ResourceGroupName)
-#    $vmResource = Find-AzureRmResource -ResourceGroupNameContains $script:ResourceGroupName -ResourceType Microsoft.Compute/VirtualMachines -ResourceNameContains $script:ResourceGroupName -ErrorAction SilentlyContinue
-#    if ($vmResource -eq $null)
-#    {
-#        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - There is no VM '{0}' in resource group '{1}'." -f $script:ResourceGroupName, $script:ResourceGroupName)
-#        throw ("There is no VM with name '{0}' in resource group '{1}'." -f $script:ResourceGroupName, $script:ResourceGroupName)
-#    }
+# Initialize cloud related variables
+$script:SuiteExists = (Find-AzureRmResourceGroup -Tag @{"IotSuiteType" = $script:SuiteType} | Where-Object {$_.name -eq $script:SuiteName -or $_.ResourceGroupName -eq $script:SuiteName}) -ne $null
+Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Get resource group name for suiteName '{0}' and suiteType '{1}'" -f $script:SuiteName, $script:SuiteType)
+$script:ResourceGroupName = (GetResourceGroup).ResourceGroupName
+Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Resourcegroup name is '{0}'" -f $script:ResourceGroupName)
+$script:StorageAccount = GetAzureStorageAccount
+$script:StorageAccountBlobEndpoint = (Get-AzureRmStorageAccount  -ResourceGroupName $script:ResourceGroupName -Name $script:StorageAccount.StorageAccountName).PrimaryEndpoints.Blob
+$script:IoTHubName = GetAzureIotHubName
+$script:VmName = GetAzureVmName
+$script:RdxEnvironmentName = GetAzureRdxName
+$script:ArmParameter = @{}
 
-#    # Update the simulation.
-#    Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Upload and start the simulation"
-#    SimulationUpdate
-#    UpdateBrowserEndpoints
-#    exit
-#}
+# Update the simulation in the VM
+if ($script:Command -eq "updatesimulation")
+{
+    # Check if resource group and VM exists.
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Validate resource group name '{0}' existence" -f $script:ResourceGroupName)
+    $resourceGroup = Get-AzureRmResourceGroup -Name $script:ResourceGroupName -ErrorAction SilentlyContinue
+    if ($resourceGroup -eq $null)
+    {
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Resource group {0} does not exist." -f $script:ResourceGroupName)
+        throw ("Resource group {0} does not exist." -f $script:ResourceGroupName)
+    }
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check if VM exists in resource group '{0}'" -f $script:ResourceGroupName)
+    $vmResource = Find-AzureRmResource -ResourceGroupNameContains $script:ResourceGroupName -ResourceType Microsoft.Compute/VirtualMachines -ResourceNameContains $script:ResourceGroupName -ErrorAction SilentlyContinue
+    if ($vmResource -eq $null)
+    {
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - There is no VM '{0}' in resource group '{1}'." -f $script:ResourceGroupName, $script:ResourceGroupName)
+        throw ("There is no VM with name '{0}' in resource group '{1}'." -f $script:ResourceGroupName, $script:ResourceGroupName)
+    }
 
-## Respect existing Sku values
-#if ($script:SuiteExists)
-#{
-#    # Block redeployment
-#    if ($script:Command -eq "local" -or $script:Command -eq "cloud" -and $script:Force -eq $false)
-#    {
-#        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - A deployment with name '{0}' already exists. Please use parameter -Force to enforce a redeployment." -f $script:SuiteName)
-#        throw ("An deployment with name '{0}' does already exists. Please use parameter -Force to enforce redeployment." -f $script:SuiteName)
-#    }
+    # Update the simulation.
+    Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Upload and start the simulation"
+    SimulationUpdate
+    UpdateBrowserEndpoints
+    exit
+}
 
-#    try 
-#    {
-#        $storageResource = Get-AzureRmResource -ResourceName $script:StorageAccount.StorageAccountName -ResourceType Microsoft.´Storage/storageAccounts -ResourceGroupName $script:ResourceGroupName
-#        $script:StorageSkuName = $storageResource.Sku.name
-#        $script:StorageKind = $storageResource.Kind
-#    }
-#    catch {}
+# Respect existing Sku values
+if ($script:SuiteExists)
+{
+    # Block redeployment
+    if ($script:Command -eq "local" -or $script:Command -eq "cloud" -and $script:Force -eq $false)
+    {
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - A deployment with name '{0}' already exists. Please use parameter -Force to enforce a redeployment." -f $script:SuiteName)
+        throw ("An deployment with name '{0}' does already exists. Please use parameter -Force to enforce redeployment." -f $script:SuiteName)
+    }
 
-#    try 
-#    {
-#        $iotHubResource = Get-AzureRmResource -ResourceName $script:IoTHubName -ResourceType Microsoft.Devices/IoTHubs -ResourceGroupName $script:ResourceGroupName
-#        $script:IoTHubSkuName = $iotHubResource.Sku.name
-#    }
-#    catch {}
+    try 
+    {
+        $storageResource = Get-AzureRmResource -ResourceName $script:StorageAccount.StorageAccountName -ResourceType Microsoft.´Storage/storageAccounts -ResourceGroupName $script:ResourceGroupName
+        $script:StorageSkuName = $storageResource.Sku.name
+        $script:StorageKind = $storageResource.Kind
+    }
+    catch {}
 
-#    try 
-#    {
-#        $webResource = Get-AzureRmResource -ResourceName $script:WebsiteName -ResourceType Microsoft.Web/sites -ResourceGroupName $script:ResourceGroupName
-#        $webPlanResource = Get-AzureRmResource -ResourceId $webResource.Properties.serverFarmId
-#        $script:WebPlanSkuName = $webPlanResource.sku.name
-#        $script:WebWorkerSize = $webPlanResource.containerSize
-#        $script:WebWorkerCount = $webPlanResource.maxNumberOfWorkers
-#    }
-#    catch {}
+    try 
+    {
+        $iotHubResource = Get-AzureRmResource -ResourceName $script:IoTHubName -ResourceType Microsoft.Devices/IoTHubs -ResourceGroupName $script:ResourceGroupName
+        $script:IoTHubSkuName = $iotHubResource.Sku.name
+    }
+    catch {}
 
-#    try 
-#    {
-#        $vmResource = Get-AzureRmResource -ResourceName $script:VmName -ResourceType Microsoft.Compute/virtualMachines -ResourceGroupName $script:ResourceGroupName
-#        $script:VmSize = $vmResource.Properties.hardwareProfile.vmSize
-#    }
-#    catch {}
+    try 
+    {
+        $webResource = Get-AzureRmResource -ResourceName $script:WebsiteName -ResourceType Microsoft.Web/sites -ResourceGroupName $script:ResourceGroupName
+        $webPlanResource = Get-AzureRmResource -ResourceId $webResource.Properties.serverFarmId
+        $script:WebPlanSkuName = $webPlanResource.sku.name
+        $script:WebWorkerSize = $webPlanResource.containerSize
+        $script:WebWorkerCount = $webPlanResource.maxNumberOfWorkers
+    }
+    catch {}
 
-#    try 
-#    {
-#        $rdxResource = Get-AzureRmResource -ResourceName $script:RdxName -ResourceType Microsoft.TimeseriesInsights/environments -ResourceGroupName $script:ResourceGroupName
-#        $script:RdxEnvironmentSkuName = $rdxResource.Sku.name
-#    }
-#    catch {}
-#}
+    try 
+    {
+        $vmResource = Get-AzureRmResource -ResourceName $script:VmName -ResourceType Microsoft.Compute/virtualMachines -ResourceGroupName $script:ResourceGroupName
+        $script:VmSize = $vmResource.Properties.hardwareProfile.vmSize
+    }
+    catch {}
 
-## Setup AAD for webservice
-#UpdateResourceGroupState ProvisionAAD
-#UpdateAadApp $script:AadTenant
-#$script:AadClientId = GetEnvSetting "AadClientId"
-#UpdateEnvSetting "AadInstance" ($script:AzureEnvironment.ActiveDirectoryAuthority + "{0}")
-####
+    try 
+    {
+        $rdxResource = Get-AzureRmResource -ResourceName $script:RdxName -ResourceType Microsoft.TimeseriesInsights/environments -ResourceGroupName $script:ResourceGroupName
+        $script:RdxEnvironmentSkuName = $rdxResource.Sku.name
+    }
+    catch {}
+}
+
+# Setup AAD for webservice
+UpdateResourceGroupState ProvisionAAD
+UpdateAadApp $script:AadTenant
+$script:AadClientId = GetEnvSetting "AadClientId"
+UpdateEnvSetting "AadInstance" ($script:AzureEnvironment.ActiveDirectoryAuthority + "{0}")
 
 # Build the solution
 Build
@@ -2437,212 +2431,212 @@ SimulationBuild
 # Build simulation scripts
 SimulationBuildScripts
 
-## Compressed simulation binaries
-#Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Build compressed archive"
-#Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
-#Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
-#Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
-#Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
+# Compressed simulation binaries
+Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Build compressed archive"
+Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
+Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
+Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
+Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
 
-## Copy the factory simulation template, the factory simulation binaries and the VM init script into the WebDeploy container.
-#Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Upload all required files into the storage account.")
-#$script:VmArmTemplateUri = UploadFileToContainerBlob $script:VmDeploymentTemplateFile $script:StorageAccount.StorageAccountName "WebDeploy" $true
-#$script:SimulationUri = UploadFileToContainerBlob "$script:SimulationPath/simulation" $script:StorageAccount.StorageAccountName "WebDeploy" $true
-#$script:InitSimulationUri = UploadFileToContainerBlob $script:SimulationBuildOutputInitScript $script:StorageAccount.StorageAccountName "WebDeploy" $true
-#$script:WebAppUri = UploadFileToContainerBlob $script:WebAppLocalPath $script:StorageAccount.StorageAccountName "WebDeploy" -secure $true
+# Copy the factory simulation template, the factory simulation binaries and the VM init script into the WebDeploy container.
+Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Upload all required files into the storage account.")
+$script:VmArmTemplateUri = UploadFileToContainerBlob $script:VmDeploymentTemplateFile $script:StorageAccount.StorageAccountName "WebDeploy" $true
+$script:SimulationUri = UploadFileToContainerBlob "$script:SimulationPath/simulation" $script:StorageAccount.StorageAccountName "WebDeploy" $true
+$script:InitSimulationUri = UploadFileToContainerBlob $script:SimulationBuildOutputInitScript $script:StorageAccount.StorageAccountName "WebDeploy" $true
+$script:WebAppUri = UploadFileToContainerBlob $script:WebAppLocalPath $script:StorageAccount.StorageAccountName "WebDeploy" -secure $true
 
-## Ensure that our build output is picked up by the ARM deployment.
-#$script:ArmParameter += @{ `
-#    webAppUri = $script:WebAppUri; `
-#    vmArmTemplateUri = $script:VmArmTemplateUri; `
-#    simulationUri = $script:SimulationUri; `
-#    initSimulationUri = $script:InitSimulationUri; `
-#}
+# Ensure that our build output is picked up by the ARM deployment.
+$script:ArmParameter += @{ `
+    webAppUri = $script:WebAppUri; `
+    vmArmTemplateUri = $script:VmArmTemplateUri; `
+    simulationUri = $script:SimulationUri; `
+    initSimulationUri = $script:InitSimulationUri; `
+}
 
-#$script:X509Collection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
-#$script:X509Collection.Import("$script:CreateCertsPath/private/$script:DeploymentName/$script:UaSecretBaseName.pfx", $script:UaSecretPassword, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
-#$script:UaSecretThumbprint = $script:X509Collection.ThumbPrint
-#Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - X509 certificate for OPC UA communication has thumbprint: $script:UaSecretThumbprint"
-#$script:UaSecretForWebsiteEncoded = [System.Convert]::ToBase64String($script:X509Collection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12))
-#$script:UaSecretForVmEncoded = [System.Convert]::ToBase64String($script:X509Collection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert, $script:UaSecretPassword))
-#$script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd"
-#if ($script:WebSitesServicePrincipal -eq $null)
-#{
-#    Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Microsoft.Web serivce principal unknown. Registering Microsoft.Web for the subscription."
-#    Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Web
-#    $script:maxTries = $MAX_TRIES;
-#    while ($script:WebSitesServicePrincipal -eq $null)
-#    {
-#        sleep $SECONDS_TO_SLEEP
-#        $script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd"
-#        if ($script:maxTries-- -le 0)
-#        {
-#            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Timed out while waiting for creation of the ServicePrincipal for resource provider for Microsoft.Web.")
-#            throw ("Timed out while waiting for creation of the ServicePrincipal for resource provider for Microsoft.Web.")
-#        }
-#    }
-#}
-#$script:WebSitesServicePrincipalObjectId = $script:WebSitesServicePrincipal.Id
-#Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Websites Service Principal Object Id: $script:WebSitesServicePrincipalObjectId"
-#$script:RdxAccessPolicyPrincipalObjectId = (Get-AzureRmADServicePrincipal -ServicePrincipalName $script:AadClientId).Id
-#Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - AAD Client Service Principal Object Id: $script:RdxAccessPolicyPrincipalObjectId"
-#$script:RdxOwnerServicePrincipalObjectId = GetOwnerObjectId
-#Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Data Access Contributor Object Id: $script:RdxOwnerServicePrincipalObjectId"
-#$script:RdxAuthenticationClientSecret = CreateAadClientSecret
+$script:X509Collection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
+$script:X509Collection.Import("$script:CreateCertsPath/private/$script:DeploymentName/$script:UaSecretBaseName.pfx", $script:UaSecretPassword, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
+$script:UaSecretThumbprint = $script:X509Collection.ThumbPrint
+Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - X509 certificate for OPC UA communication has thumbprint: $script:UaSecretThumbprint"
+$script:UaSecretForWebsiteEncoded = [System.Convert]::ToBase64String($script:X509Collection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12))
+$script:UaSecretForVmEncoded = [System.Convert]::ToBase64String($script:X509Collection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert, $script:UaSecretPassword))
+$script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd"
+if ($script:WebSitesServicePrincipal -eq $null)
+{
+    Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Microsoft.Web serivce principal unknown. Registering Microsoft.Web for the subscription."
+    Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Web
+    $script:maxTries = $MAX_TRIES;
+    while ($script:WebSitesServicePrincipal -eq $null)
+    {
+        sleep $SECONDS_TO_SLEEP
+        $script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd"
+        if ($script:maxTries-- -le 0)
+        {
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Timed out while waiting for creation of the ServicePrincipal for resource provider for Microsoft.Web.")
+            throw ("Timed out while waiting for creation of the ServicePrincipal for resource provider for Microsoft.Web.")
+        }
+    }
+}
+$script:WebSitesServicePrincipalObjectId = $script:WebSitesServicePrincipal.Id
+Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Websites Service Principal Object Id: $script:WebSitesServicePrincipalObjectId"
+$script:RdxAccessPolicyPrincipalObjectId = (Get-AzureRmADServicePrincipal -ServicePrincipalName $script:AadClientId).Id
+Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - AAD Client Service Principal Object Id: $script:RdxAccessPolicyPrincipalObjectId"
+$script:RdxOwnerServicePrincipalObjectId = GetOwnerObjectId
+Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Data Access Contributor Object Id: $script:RdxOwnerServicePrincipalObjectId"
+$script:RdxAuthenticationClientSecret = CreateAadClientSecret
 
-## Set up ARM parameters.
-#$script:ArmParameter += @{ `
-#    suitename = $script:SuiteName; `
-#    suiteType = $script:SuiteType; `
-#    storageName = $script:StorageAccount.StorageAccountName; `
-#    storageSkuName = $script:StorageSkuName; `
-#    storageKind = $script:StorageKind; `
-#    storageEndpointSuffix = $script:AzureEnvironment.StorageEndpointSuffix; `
-#    aadTenant = $script:AadTenant; `
-#    aadInstance = $($script:AzureEnvironment.ActiveDirectoryAuthority + "{0}"); `
-#    aadClientId = $script:AadClientId; `
-#    webPlanSkuName = $script:WebPlanSkuName; `
-#    webPlanWorkerSize = $script:WebPlanWorkerSize; `
-#    webPlanWorkerCount = $script:WebPlanWorkerCount; `
-#    webPlanAlwaysOn = $script:WebPlanAlwaysOn; `
-#    iotHubName = $script:IoTHubName; `
-#    iotHubSkuName = $script:IoTHubSkuName; `
-#    iotHubSkuCapacityUnits = $script:IoTHubSkuCapacityUnits; `
-#    rdxDnsName = $script:RdxSuffix; `
-#    rdxEnvironmentName = $script:RdxEnvironmentName; `
-#    rdxEnvironmentSkuName = $script:RdxEnvironmentSkuName; `
-#    rdxAuthenticationClientSecret = $script:RdxAuthenticationClientSecret; `
-#    rdxAccessPolicyPrincipalObjectId = $script:RdxAccessPolicyPrincipalObjectId; `
-#    rdxOwnerServicePrincipalObjectId = $script:RdxOwnerServicePrincipalObjectId; `
-#    vmSize = $script:VmSize; `
-#    adminUsername = $script:VmAdminUsername; `
-#    adminPassword = $script:VmAdminPassword; `
-#    keyVaultSkuName = $script:KeyVaultSkuName; `
-#    keyVaultSecretBaseName = $script:UaSecretBaseName; `
-#    keyVaultVmSecret = $script:UaSecretForVmEncoded; `
-#    keyVaultWebsiteSecret = $script:UaSecretForWebsiteEncoded; `
-#    uaSecretThumbprint = $script:UaSecretThumbprint; `
-#    uaSecretPassword =  $script:UaSecretPassword; `
-#    webSitesServicePrincipalObjectId = $script:WebSitesServicePrincipalObjectId; `
-#}
+# Set up ARM parameters.
+$script:ArmParameter += @{ `
+    suitename = $script:SuiteName; `
+    suiteType = $script:SuiteType; `
+    storageName = $script:StorageAccount.StorageAccountName; `
+    storageSkuName = $script:StorageSkuName; `
+    storageKind = $script:StorageKind; `
+    storageEndpointSuffix = $script:AzureEnvironment.StorageEndpointSuffix; `
+    aadTenant = $script:AadTenant; `
+    aadInstance = $($script:AzureEnvironment.ActiveDirectoryAuthority + "{0}"); `
+    aadClientId = $script:AadClientId; `
+    webPlanSkuName = $script:WebPlanSkuName; `
+    webPlanWorkerSize = $script:WebPlanWorkerSize; `
+    webPlanWorkerCount = $script:WebPlanWorkerCount; `
+    webPlanAlwaysOn = $script:WebPlanAlwaysOn; `
+    iotHubName = $script:IoTHubName; `
+    iotHubSkuName = $script:IoTHubSkuName; `
+    iotHubSkuCapacityUnits = $script:IoTHubSkuCapacityUnits; `
+    rdxDnsName = $script:RdxSuffix; `
+    rdxEnvironmentName = $script:RdxEnvironmentName; `
+    rdxEnvironmentSkuName = $script:RdxEnvironmentSkuName; `
+    rdxAuthenticationClientSecret = $script:RdxAuthenticationClientSecret; `
+    rdxAccessPolicyPrincipalObjectId = $script:RdxAccessPolicyPrincipalObjectId; `
+    rdxOwnerServicePrincipalObjectId = $script:RdxOwnerServicePrincipalObjectId; `
+    vmSize = $script:VmSize; `
+    adminUsername = $script:VmAdminUsername; `
+    adminPassword = $script:VmAdminPassword; `
+    keyVaultSkuName = $script:KeyVaultSkuName; `
+    keyVaultSecretBaseName = $script:UaSecretBaseName; `
+    keyVaultVmSecret = $script:UaSecretForVmEncoded; `
+    keyVaultWebsiteSecret = $script:UaSecretForWebsiteEncoded; `
+    uaSecretThumbprint = $script:UaSecretThumbprint; `
+    uaSecretPassword =  $script:UaSecretPassword; `
+    webSitesServicePrincipalObjectId = $script:WebSitesServicePrincipalObjectId; `
+}
 
-## Check if there is a bing maps license key set in the configuration file.
-#$script:MapApiQueryKey = GetEnvSetting "MapApiQueryKey"
-#if ([string]::IsNullOrEmpty($script:MapApiQueryKey))
-#{
-#    # To enable bing maps functionality, the PowerShell environement variable MapApiQueryKey must hold bing maps license key
-#    if (-not [string]::IsNullOrEmpty($env:MapApiQueryKey))
-#    {
-#        $script:MapApiQueryKey = $env:MapApiQueryKey
-#    }
-#}
-## the bing maps is only set in the ARM template if there is a valid license key and if it is deployed in public cloud environments.
-#if (-not [string]::IsNullOrEmpty($script:MapApiQueryKey) -and $script:AzureEnvironmentName -eq "AzureCloud")
-#{
-#    # Pass the key to the ARM template.
-#    $script:ArmParameter += @{mapApiQueryKey=$script:MapApiQueryKey;}
-#}
+# Check if there is a bing maps license key set in the configuration file.
+$script:MapApiQueryKey = GetEnvSetting "MapApiQueryKey"
+if ([string]::IsNullOrEmpty($script:MapApiQueryKey))
+{
+    # To enable bing maps functionality, the PowerShell environement variable MapApiQueryKey must hold bing maps license key
+    if (-not [string]::IsNullOrEmpty($env:MapApiQueryKey))
+    {
+        $script:MapApiQueryKey = $env:MapApiQueryKey
+    }
+}
+# the bing maps is only set in the ARM template if there is a valid license key and if it is deployed in public cloud environments.
+if (-not [string]::IsNullOrEmpty($script:MapApiQueryKey) -and $script:AzureEnvironmentName -eq "AzureCloud")
+{
+    # Pass the key to the ARM template.
+    $script:ArmParameter += @{mapApiQueryKey=$script:MapApiQueryKey;}
+}
 
-## Show deployment parameters.
-#Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Suite name: $script:SuiteName"
-#Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Storage Name: $($script:StorageAccount.StorageAccountName)"
-#Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - IotHub Name: $script:IoTHubName"
-#Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Rdx Name: $script:RdxEnvironmentName"
-#Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - AAD Tenant: $($script:AadTenant)"
-#Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - AAD ClientId: $($script:AadClientId)"
-#Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - ResourceGroup Name: $script:ResourceGroupName"
-#Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Deployment template file: $script:DeploymentTemplateFile"
+# Show deployment parameters.
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Suite name: $script:SuiteName"
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Storage Name: $($script:StorageAccount.StorageAccountName)"
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - IotHub Name: $script:IoTHubName"
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Rdx Name: $script:RdxEnvironmentName"
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - AAD Tenant: $($script:AadTenant)"
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - AAD ClientId: $($script:AadClientId)"
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - ResourceGroup Name: $script:ResourceGroupName"
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Deployment template file: $script:DeploymentTemplateFile"
 
-#Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Provisioning resources, if this is the first time, this operation can take up 10 minutes..."
-#Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - ARM parameters:")
-#foreach ($script:ArmParameterKey in $script:ArmParameter.Keys) 
-#{
-#    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - ARM Parameter '$($script:ArmParameterKey)' for deployment has value '$($script:ArmParameter[$script:ArmParameterKey])'")
-#}
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Provisioning resources, if this is the first time, this operation can take up 10 minutes..."
+Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - ARM parameters:")
+foreach ($script:ArmParameterKey in $script:ArmParameter.Keys) 
+{
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - ARM Parameter '$($script:ArmParameterKey)' for deployment has value '$($script:ArmParameter[$script:ArmParameterKey])'")
+}
 
-## Deploy resources to Azure
-#Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Deploy all other resources to Azure")
-#UpdateResourceGroupState ProvisionAzure
-#$script:ArmResult = New-AzureRmResourceGroupDeployment -ResourceGroupName $script:ResourceGroupName -TemplateFile $script:DeploymentTemplateFile -TemplateParameterObject $script:ArmParameter -Verbose
-#if ($script:ArmResult.ProvisioningState -ne "Succeeded")
-#{
-#    Write-Error "$(Get-Date –f $TIME_STAMP_FORMAT) - Resource deployment failed"
-#    UpdateResourceGroupState Failed
-#    throw "Provisioning failed"
-#}
-#else
-#{
-#    # For a debug confguration, we enable error logging of the WebApp
-#    if ($script:Configuration -eq "debug" -and $script:CloudDeploy -eq $true)
-#    {
-#        [System.Boolean]$enable = $true;
-#        Set-AzureRmWebApp -ResourceGroupName $script:ResourceGroupName -Name $script:SuiteName -DetailedErrorLoggingEnabled $enable | Out-Null
-#    }
-#}
+# Deploy resources to Azure
+Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Deploy all other resources to Azure")
+UpdateResourceGroupState ProvisionAzure
+$script:ArmResult = New-AzureRmResourceGroupDeployment -ResourceGroupName $script:ResourceGroupName -TemplateFile $script:DeploymentTemplateFile -TemplateParameterObject $script:ArmParameter -Verbose
+if ($script:ArmResult.ProvisioningState -ne "Succeeded")
+{
+    Write-Error "$(Get-Date –f $TIME_STAMP_FORMAT) - Resource deployment failed"
+    UpdateResourceGroupState Failed
+    throw "Provisioning failed"
+}
+else
+{
+    # For a debug confguration, we enable error logging of the WebApp
+    if ($script:Configuration -eq "debug" -and $script:CloudDeploy -eq $true)
+    {
+        [System.Boolean]$enable = $true;
+        Set-AzureRmWebApp -ResourceGroupName $script:ResourceGroupName -Name $script:SuiteName -DetailedErrorLoggingEnabled $enable | Out-Null
+    }
+}
 
-## Set Config file variables
-#Write-Verbose  "$(Get-Date –f $TIME_STAMP_FORMAT) - Updating config file settings"
-#UpdateEnvSetting "ServiceStoreAccountName" $script:StorageAccount.StorageAccountName
-#UpdateEnvSetting "SolutionStorageAccountConnectionString" $script:ArmResult.Outputs['storageConnectionString'].Value
-#UpdateEnvSetting "IotHubOwnerConnectionString" $script:ArmResult.Outputs['iotHubOwnerConnectionString'].Value
-#UpdateEnvSetting "RdxAuthenticationClientSecret" $script:RdxAuthenticationClientSecret
-#UpdateEnvSetting "RdxDnsName" $script:ArmResult.Outputs['rdxDnsName'].Value
-#UpdateEnvSetting "RdxEnvironmentId" $script:ArmResult.Outputs['rdxEnvironmentId'].Value
-#if ($script:ArmResult.Outputs['mapApiQueryKey'].Value.Length -gt 0 -and $script:ArmResult.Outputs['mapApiQueryKey'].Value -ne "0")
-#{
-#    UpdateEnvSetting "MapApiQueryKey" $script:ArmResult.Outputs['mapApiQueryKey'].Value
-#}
+# Set Config file variables
+Write-Verbose  "$(Get-Date –f $TIME_STAMP_FORMAT) - Updating config file settings"
+UpdateEnvSetting "ServiceStoreAccountName" $script:StorageAccount.StorageAccountName
+UpdateEnvSetting "SolutionStorageAccountConnectionString" $script:ArmResult.Outputs['storageConnectionString'].Value
+UpdateEnvSetting "IotHubOwnerConnectionString" $script:ArmResult.Outputs['iotHubOwnerConnectionString'].Value
+UpdateEnvSetting "RdxAuthenticationClientSecret" $script:RdxAuthenticationClientSecret
+UpdateEnvSetting "RdxDnsName" $script:ArmResult.Outputs['rdxDnsName'].Value
+UpdateEnvSetting "RdxEnvironmentId" $script:ArmResult.Outputs['rdxEnvironmentId'].Value
+if ($script:ArmResult.Outputs['mapApiQueryKey'].Value.Length -gt 0 -and $script:ArmResult.Outputs['mapApiQueryKey'].Value -ne "0")
+{
+    UpdateEnvSetting "MapApiQueryKey" $script:ArmResult.Outputs['mapApiQueryKey'].Value
+}
 
-#UpdateResourceGroupState Complete
-#Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Provisioning and deployment completed successfully, see {0}.config.user for deployment values" -f $script:DeploymentName)
+UpdateResourceGroupState Complete
+Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Provisioning and deployment completed successfully, see {0}.config.user for deployment values" -f $script:DeploymentName)
 
-## For cloud deployments start the website
-#if ($script:CloudDeploy -eq $true)
-#{
-#    $script:MaxTries = $MAX_TRIES
-#    $script:WebEndpoint = "{0}.{1}" -f $script:DeploymentName, $script:WebsiteSuffix
-#    if (!(Test-AzureName -Website $script:WebEndpoint))
-#    {
-#        Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Waiting for website URL to resolve."
-#        while (!(Test-AzureName -Website $script:WebEndpoint))
-#        {
-#            Clear-DnsClientCache
-#            Write-Progress -Activity "Resolving website URL" -Status "Trying" -SecondsRemaining ($script:MaxTries*$SECONDS_TO_SLEEP)
-#            if ($script:MaxTries-- -le 0)
-#            {
-#                Write-Warning ("$(Get-Date –f $TIME_STAMP_FORMAT) - Unable to resolve Website endpoint {0}" -f $script:WebAppHomepage)
-#                break
-#            }
-#            sleep $SECONDS_TO_SLEEP
-#        }
-#    }
-#    if (Test-AzureName -Website $script:WebEndpoint)
-#    {
-#        # Wait till we can successfully load the page
-#        Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Waiting for website to respond."
-#        while ($true)
-#        {
-#            try
-#            {
-#                $result = Invoke-WebRequest -Uri $script:WebAppHomepage
-#            }
-#            catch 
-#            {
-#                $result = $null
-#            }
-#            if ($result -ne $null -and $result.StatusCode -eq 200)
-#            {
-#                break;
-#            }
-#            Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Sleep for 5 seconds and check again."
-#            Start-Sleep -Seconds 10
-#        }
-#        # start the browser to show the page
-#        start $script:WebAppHomepage
-#    }
-#}
-#else
-#{
-#    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - For local deployment, open the Connectedfactory.sln and run the Web project from Visual Studio.")
-#    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Then you can access the dashboard at '{0}'" -f $script:WebAppHomepage)
-#}
+# For cloud deployments start the website
+if ($script:CloudDeploy -eq $true)
+{
+    $script:MaxTries = $MAX_TRIES
+    $script:WebEndpoint = "{0}.{1}" -f $script:DeploymentName, $script:WebsiteSuffix
+    if (!(Test-AzureName -Website $script:WebEndpoint))
+    {
+        Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Waiting for website URL to resolve."
+        while (!(Test-AzureName -Website $script:WebEndpoint))
+        {
+            Clear-DnsClientCache
+            Write-Progress -Activity "Resolving website URL" -Status "Trying" -SecondsRemaining ($script:MaxTries*$SECONDS_TO_SLEEP)
+            if ($script:MaxTries-- -le 0)
+            {
+                Write-Warning ("$(Get-Date –f $TIME_STAMP_FORMAT) - Unable to resolve Website endpoint {0}" -f $script:WebAppHomepage)
+                break
+            }
+            sleep $SECONDS_TO_SLEEP
+        }
+    }
+    if (Test-AzureName -Website $script:WebEndpoint)
+    {
+        # Wait till we can successfully load the page
+        Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Waiting for website to respond."
+        while ($true)
+        {
+            try
+            {
+                $result = Invoke-WebRequest -Uri $script:WebAppHomepage
+            }
+            catch 
+            {
+                $result = $null
+            }
+            if ($result -ne $null -and $result.StatusCode -eq 200)
+            {
+                break;
+            }
+            Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Sleep for 5 seconds and check again."
+            Start-Sleep -Seconds 10
+        }
+        # start the browser to show the page
+        start $script:WebAppHomepage
+    }
+}
+else
+{
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - For local deployment, open the Connectedfactory.sln and run the Web project from Visual Studio.")
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Then you can access the dashboard at '{0}'" -f $script:WebAppHomepage)
+}
