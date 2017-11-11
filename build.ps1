@@ -605,13 +605,18 @@ Function PutEnvSetting()
     }
     $script:DeploymentSettingsXml.Save((Get-Item $script:DeploymentSettingsFile).FullName)
 }
-Function AddAzureAccount()
+Function GetAzureAccountCredential()
 {
 	$accountName ="aditya@manuapratapsinghaccenture.onmicrosoft.com"
 	$password = ConvertTo-SecureString "man5480U#" -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($accountName, $password)
+	return $credential
+}
+Function AddAzureAccount()
+{
+	
 	#$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -SubscriptionDataFile $script:SubscriptionDataFile
-	$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential $credential
+	$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential GetAzureAccountCredential
 	return $account
 }
 #
@@ -716,7 +721,7 @@ Function ValidateLoginCredentials()
     if ($rmProfileLoaded -ne $true) {
         Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Logging in to your AzureRM account"
         try {
-            Login-AzureRmAccount -EnvironmentName $script:AzureEnvironment.Name -ErrorAction Stop | Out-Null
+            Login-AzureRmAccount -EnvironmentName $script:AzureEnvironment.Name -Credential GetAzureAccountCredential -ErrorAction Stop | Out-Null
         }
         catch
         {
