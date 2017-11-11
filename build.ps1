@@ -84,7 +84,7 @@ Param(
 [Parameter(Mandatory=$false, HelpMessage="Specify a username to use for the Azure deployment.")]
 [switch] $LowCost = $false,
 [Parameter(Mandatory=$false, HelpMessage="Enforce redeployment.")]
-[switch] $Force = $false,
+[switch] $Force = $true,
 [Parameter(Mandatory=$false, HelpMessage="Flag to use SKUs with lowest cost for all required resources.")]
 [string] $PresetAzureAccountName="Aditya@manuapratapsinghaccenture.onmicrosoft.com",
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure subscription to use for the Azure deployment.")]
@@ -491,6 +491,7 @@ Function GetAzureStorageAccount()
     $storage = Get-AzureRmStorageAccount -ResourceGroupName $script:ResourceGroupName -Name $storageAccountName -ErrorAction SilentlyContinue
     if ($storage -eq $null)
     {
+		Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Storage
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Creating new storage account: '{0}" -f $storageAccountName)
         $storage = New-AzureRmStorageAccount -ResourceGroupName $script:ResourceGroupName -StorageAccountName $storageAccountName -Location $script:AzureLocation -Type $script:StorageSkuName -Kind $script:StorageKind
     }
@@ -604,7 +605,11 @@ Function PutEnvSetting()
     }
     $script:DeploymentSettingsXml.Save((Get-Item $script:DeploymentSettingsFile).FullName)
 }
-
+Function AddAzureAccount()
+{
+	$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -SubscriptionDataFile $script:SubscriptionDataFile
+	return $account
+}
 #
 # Called in case no account is configured to let user chose the account.
 # Note: do not use Write-Output since return value is used
@@ -623,7 +628,7 @@ Function GetAzureAccountInfo()
         if ($accounts -eq $null)
         {
             Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Add new Azure account"
-            $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
+            $account = AddAzureAccount
         }
         else 
         {
@@ -650,7 +655,7 @@ Function GetAzureAccountInfo()
 
                 if ($script:OptionIndex -eq $accounts.length + 1)
                 {
-                    $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
+                    $account = AddAzureAccount
                     break;
                 }
                 
@@ -680,12 +685,12 @@ Function ValidateLoginCredentials()
     if ($account -eq $null)
     {
         Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Account '{0}' is unknown in Azure environment '{1}'. Add it." -f $script:AzureAccountName, $script:AzureEnvironment.Name)
-        $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
+        $account = AddAzureAccount
     }
     if ((Get-AzureSubscription -SubscriptionId ($account.Subscriptions -replace '(?:\r\n)',',').split(",")[0]) -eq $null)
     {
         Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - No subscriptions. Add account")
-        Add-AzureAccount -Environment $script:AzureEnvironment.Name | Out-Null
+        AddAzureAccount | Out-Null
     }
     
     # Validate Azure RM
@@ -1274,6 +1279,27 @@ function UpdateBrowserEndpoints()
     $xml.Save($applicationFileName)
 }
 
+Function Find-MsBuild([int] $MaxVersion = 2017)  
+{
+    $agentPath = "$Env:programfiles `(x86`)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin\msbuild.exe"
+    $devPath = "$Env:programfiles `(x86`)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\msbuild.exe"
+    $proPath = "$Env:programfiles `(x86`)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\Bin\msbuild.exe"
+    $communityPath = "$Env:programfiles `(x86`)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild.exe"
+    $fallback2015Path = "${Env:ProgramFiles(x86)}\MSBuild\14.0\Bin\MSBuild.exe"
+    $fallback2013Path = "${Env:ProgramFiles(x86)}\MSBuild\12.0\Bin\MSBuild.exe"
+    $fallbackPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319"
+
+    If ((2017 -le $MaxVersion) -And (Test-Path $agentPath)) { return $agentPath } 
+    If ((2017 -le $MaxVersion) -And (Test-Path $devPath)) { return $devPath } 
+    If ((2017 -le $MaxVersion) -And (Test-Path $proPath)) { return $proPath } 
+    If ((2017 -le $MaxVersion) -And (Test-Path $communityPath)) { return $communityPath } 
+    If ((2015 -le $MaxVersion) -And (Test-Path $fallback2015Path)) { return $fallback2015Path } 
+    If ((2013 -le $MaxVersion) -And (Test-Path $fallback2013Path)) { return $fallback2013Path } 
+    If (Test-Path $fallbackPath) { return $fallbackPath } 
+
+    throw "Yikes - Unable to find msbuild"
+}
+
 Function Build()
 {
     # Check installation of required tools.
@@ -1281,14 +1307,14 @@ Function Build()
 
     # Restore packages.
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring nuget packages for solution.")
-    Invoke-Expression ".nuget/nuget restore ./Connectedfactory.sln"
+    Invoke-Expression "$script:IoTSuiteRootPath/.nuget/nuget.exe restore $script:IoTSuiteRootPath/Connectedfactory.sln"
     if ($LASTEXITCODE -ne 0)
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring nuget packages for solution failed.")
         throw "Restoring nuget packages for solution failed."
     }
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring dotnet packages for solution.")
-    Invoke-Expression "dotnet restore"
+    Invoke-Expression "dotnet restore $script:IoTSuiteRootPath/Connectedfactory.sln"
     if ($LASTEXITCODE -ne 0)
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring dotnet packages for solution failed.")
@@ -1303,7 +1329,13 @@ Function Build()
 
     # Build the solution.
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building Connectedfactory.sln for configuration '{0}'." -f $script:Configuration)
-    Invoke-Expression "msbuild Connectedfactory.sln /v:m /p:Configuration=$script:Configuration $script:EnforceWebAppAdminMode"
+
+	$msbuildPath = Find-MsBuild 
+	Write-Output "MS BUILD PATH '$msbuildPath'"
+	$fs = New-Object -ComObject Scripting.FileSystemObject
+	$f = $fs.GetFile($msbuildPath)
+	$msbuildPath2 = $f.shortpath   
+    Invoke-Expression "$msbuildPath2 $script:IoTSuiteRootPath/Connectedfactory.sln /v:m /p:Configuration=$script:Configuration $script:EnforceWebAppAdminMode"
     if ($LASTEXITCODE -ne 0)
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building Connectedfactory.sln failed.")
@@ -1318,7 +1350,12 @@ Function Package()
     # Check installation of required tools.
     CheckCommandAvailability "msbuild.exe" | Out-Null
 
-    Invoke-Expression "msbuild $script:IotSuiteRootPath/WebApp/WebApp.csproj /v:m /T:Package /p:Configuration=$script:Configuration"
+    $msbuildPath = Find-MsBuild 
+	Write-Output "MS BUILD PATH '$msbuildPath'"
+	$fs = New-Object -ComObject Scripting.FileSystemObject
+	$f = $fs.GetFile($msbuildPath)
+	$msbuildPath2 = $f.shortpath   
+    Invoke-Expression "$msbuildPath2 $script:IotSuiteRootPath/WebApp/WebApp.csproj /v:m /T:Package /p:Configuration=$script:Configuration"
     if ($LASTEXITCODE -ne 0)
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building WebApp.csproj failed.")
@@ -2016,7 +2053,7 @@ $EXPECTED_POSHSSH_MODULE_VERSION = "1.7.7"
 
 # Variable initialization
 $script:IoTSuiteRootPath = Split-Path $MyInvocation.MyCommand.Path
-$script:IoTSuiteRootPath = $BuildRepositoryLocalPath
+#$script:IoTSuiteRootPath = $BuildRepositoryLocalPath
 $script:SimulationPath = "$script:IoTSuiteRootPath/Simulation"
 $script:CreateCertsPath = "$script:SimulationPath/Factory/CreateCerts"
 $script:WebAppPath = "$script:IoTSuiteRootPath/WebApp"
@@ -2117,6 +2154,10 @@ $script:DockerPublisherVersion = "2.1.1"
 $script:UaSecretBaseName = "UAWebClient"
 # Note: The password could only be changed if it is synced with the password used in CreateCerts.exe
 $script:UaSecretPassword = "password"
+
+$script:SubscriptionDataFile = "{0}/{1}-{2}-credentials.publishsettings" -f $script:IoTSuiteRootPath, $script:PresetAzureAccountName, $script:PresetAzureSubscriptionName
+
+Write-Output "Subscription Data File ######$script:SubscriptionDataFile"
 
 # Load System.Web
 Add-Type -AssemblyName System.Web
