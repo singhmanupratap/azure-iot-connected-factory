@@ -1,4 +1,4 @@
-ï»¿<#
+<#
 .SYNOPSIS
     Builds an Azure IoT Connected factory solution preconfigured solution (CF PCS).
 .DESCRIPTION
@@ -70,14 +70,14 @@ Param(
 
 [Parameter(Position=0, Mandatory=$false, HelpMessage="Specify the command to execute.")]
 [ValidateSet("build", "updatesimulation", "local", "cloud", "clean", "delete")]
-[string] $Command = "cloud",
+[string] $Command = "build",
 [Parameter(Mandatory=$false, HelpMessage="Specify the configuration to build.")]
 [ValidateSet("debug", "release")]
-[string] $Configuration = "release",
+[string] $Configuration = "debug",
 [Parameter(Mandatory=$false, HelpMessage="Specify the name of the solution")]
 [ValidatePattern("^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{3,49}[a-zA-Z0-9]{1,1}$")]
 [ValidateLength(3, 62)]
-[string] $DeploymentName = "testconnectedfactory",
+[string] $DeploymentName = "local",
 [Parameter(Mandatory=$false, HelpMessage="Specify the name of the Azure environment to deploy your solution into.")]
 [ValidateSet("AzureCloud")]
 [string] $AzureEnvironmentName = "AzureCloud",
@@ -94,9 +94,7 @@ Param(
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure AD name to use for the Azure deployment.")]
 [string] $PresetAzureDirectoryName,
 [Parameter(Mandatory=$false, HelpMessage="Specify the admin password to use for the simulation VM.")]
-[string] $VmAdminPassword,
-[Parameter(Mandatory=$false, HelpMessage="Specify the local repository path in VSTS.")]
-[string] $BuildRepositoryLocalPath
+[string] $VmAdminPassword
 )
 
 Function CheckCommandAvailability()
@@ -111,7 +109,7 @@ Function CheckCommandAvailability()
     }
     catch
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - '{0}' not found. Is your path variable set correct or the PowerShell module implementing the cmdlet installed?" -f $command)
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - '{0}' not found. Is your path variable set correct or the PowerShell module implementing the cmdlet installed?" -f $command)
         throw ("'{0}' not found. Is your path variable set correct or the PowerShell module implementing the cmdlet installed?" -f $command)
     }
     return $true
@@ -129,7 +127,7 @@ function InstallNuget()
     {
         $sourceNugetExe = "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
         $targetFile = $nugetPath + "/nuget.exe"
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - 'nuget.exe' not found. Downloading latest from $sourceNugetExe ...")
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - 'nuget.exe' not found. Downloading latest from $sourceNugetExe ...")
         Invoke-WebRequest $sourceNugetExe -OutFile "$targetFile"
     }
 }
@@ -146,8 +144,8 @@ Function CheckModuleVersion()
     if ($Module.Count -eq 0)
     {
         # If the script fails here, you need to Install-Module from the PSGallery in an Administrator shell or install via the 
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - $ModuleName module was not found. Please install version $ExpectedVersion of the module.")
-        throw "$(Get-Date â€“f $TIME_STAMP_FORMAT) - $ModuleName module was not found. Please install version $ExpectedVersion of the module."
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - $ModuleName module was not found. Please install version $ExpectedVersion of the module.")
+        throw "$(Get-Date –f $TIME_STAMP_FORMAT) - $ModuleName module was not found. Please install version $ExpectedVersion of the module."
     }
     else 
     {
@@ -155,15 +153,15 @@ Function CheckModuleVersion()
         $ComparisonResult = $ExpectedVersionObject.CompareTo($Module.Version)
         if ($ComparisonResult -eq 1)
         {
-            Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - $ModuleName module version $($Module.Version.Major).$($Module.Version.Minor).$($Module.Version.Build) is installed; please update to $($ExpectedVersion) and run again.")
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - $ModuleName module version $($Module.Version.Major).$($Module.Version.Minor).$($Module.Version.Build) is installed; please update to $($ExpectedVersion) and run again.")
             throw "$ModuleName module version $($Module.Version.Major).$($Module.Version.Minor).$($Module.Version.Build) is installed; please update to $($ExpectedVersion) and run again."
         }
         elseif ($ComparisonResult -eq -1)
         {
             if ($Module.Version.Major -ne $ExpectedVersion.Major -and $Module.Version.Minor -ne $ExpectedVersion.Minor)
             {
-                Write-Warning "$(Get-Date â€“f $TIME_STAMP_FORMAT) - This script was tested with $ModuleName module version $($ExpectedVersion)"
-                Write-Warning "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Found $ModuleName module version $($Module.Version.Major).$($Module.Version.Minor).$($Module.Version.Build) installed; continuing, but errors might occur"
+                Write-Warning "$(Get-Date –f $TIME_STAMP_FORMAT) - This script was tested with $ModuleName module version $($ExpectedVersion)"
+                Write-Warning "$(Get-Date –f $TIME_STAMP_FORMAT) - Found $ModuleName module version $($Module.Version.Major).$($Module.Version.Minor).$($Module.Version.Build) installed; continuing, but errors might occur"
             }
         }
     }
@@ -182,14 +180,14 @@ Function GetAuthenticationResult()
     $psAadClientId = "1950a258-227b-4e31-a9cf-717495945fc2"
     [Uri]$aadRedirectUri = "urn:ietf:wg:oauth:2.0:oob"
     $authority = "{0}{1}" -f $authUri, $tenant
-    write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Authority: '{0}'" -f $authority)
+    write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Authority: '{0}'" -f $authority)
     $authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority,$true
     $userId = [Microsoft.IdentityModel.Clients.ActiveDirectory.UserIdentifier]::AnyUser
     if (![string]::IsNullOrEmpty($user))
     {
         $userId = new-object Microsoft.IdentityModel.Clients.ActiveDirectory.UserIdentifier -ArgumentList $user, "OptionalDisplayableId"
     }
-    write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - {0}, {1}, {2}, {3}" -f $resourceUri, $psAadClientId, $aadRedirectUri, $userId.Id)
+    write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - {0}, {1}, {2}, {3}" -f $resourceUri, $psAadClientId, $aadRedirectUri, $userId.Id)
     $authResult = $authContext.AcquireToken($resourceUri, $psAadClientId, $aadRedirectUri, $prompt, $userId)
     return $authResult
 }
@@ -236,7 +234,7 @@ Function GetAzureLocation()
         }
         $location = $script:AzureLocations[$script:OptionIndex - 1]
     }
-    Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Azure location '$location' selected."
+    Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Azure location '$location' selected."
     # Workaround since errors pipe to the output stream
     $script:GetOrSetSettingValue = $location
 }
@@ -254,8 +252,8 @@ Function ValidateLocation()
             return $true;
         }
     }
-    Write-Warning ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Location '{0} is not available for this subscription.  Please chose a different location." -f $locationToValidate)
-    Write-Warning "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Available Locations:"
+    Write-Warning ("$(Get-Date –f $TIME_STAMP_FORMAT) - Location '{0} is not available for this subscription.  Please chose a different location." -f $locationToValidate)
+    Write-Warning "$(Get-Date –f $TIME_STAMP_FORMAT) - Available Locations:"
     foreach ($location in $script:AzureLocations)
     {
         Write-Warning $location
@@ -268,11 +266,11 @@ Function GetResourceGroup()
     $resourceGroup = Find-AzureRmResourceGroup -Tag @{"IotSuiteType" = $script:SuiteType} | ?{$_.Name -eq $script:SuiteName}
     if ($resourceGroup -eq $null)
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) No resource group found with name '{0}' and type '{1}'" -f $script:SuiteName, $script:SuiteType)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) No resource group found with name '{0}' and type '{1}'" -f $script:SuiteName, $script:SuiteType)
         # If the simulation should be updated, it is expected that the resource group exists
         if ($script:Command -ne "updatesimulation")
         {
-            Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) GetResourceGroup Location: '{0}, IoTSuiteVersion: '{1}'" -f $script:AzureLocation, $script:IotSuiteVersion)
+            Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) GetResourceGroup Location: '{0}, IoTSuiteVersion: '{1}'" -f $script:AzureLocation, $script:IotSuiteVersion)
             return New-AzureRmResourceGroup -Name $script:SuiteName -Location $script:AzureLocation -Tag @{"IoTSuiteType" = $script:SuiteType ; "IoTSuiteVersion" = $script:IotSuiteVersion ; "IoTSuiteState" = "Created"}
         }
         else
@@ -356,16 +354,16 @@ Function ValidateResourceName()
     }
     
     # Return name for existing resource if exists
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Check if Azure resource: '{0}' (type: '{1}') exists in resource group '{2}'" -f $resourceBaseName, $resourceType, $resourceGroupName)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check if Azure resource: '{0}' (type: '{1}') exists in resource group '{2}'" -f $resourceBaseName, $resourceType, $resourceGroupName)
     $resources = Find-AzureRmResource -ResourceGroupNameContains $script:ResourceGroupName -ResourceType $resourceType -ResourceNameContains $resourceBaseName
     if ($resources -ne $null -and $allowNameReuse)
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Found the resource. Validating exact naming.")
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Found the resource. Validating exact naming.")
         foreach($resource in $resources)
         {
             if ($resource.ResourceGroupName -eq $script:ResourceGroupName -and $resource.Name.ToLowerInvariant().StartsWith($resourceBaseName.ToLowerInvariant()))
             {
-                Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Resource with matching resource group name and name found.")
+                Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Resource with matching resource group name and name found.")
                 return $resource.Name
             }
         }
@@ -390,7 +388,7 @@ Function GetUniqueResourceName()
         $name = "{0}{1:x5}" -f $resourceBaseName, (get-random -max 1048575)
         if ($max-- -le 0)
         {
-            Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Unable to create unique name for resource {0} for url {1}" -f $name, $resourceUrl)
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Unable to create unique name for resource {0} for url {1}" -f $name, $resourceUrl)
             throw ("Unable to create unique name for resource {0} for url {1}" -f $name, $resourceUrl)
         }
     }
@@ -491,7 +489,7 @@ Function GetAzureStorageAccount()
     $storage = Get-AzureRmStorageAccount -ResourceGroupName $script:ResourceGroupName -Name $storageAccountName -ErrorAction SilentlyContinue
     if ($storage -eq $null)
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Creating new storage account: '{0}" -f $storageAccountName)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Creating new storage account: '{0}" -f $storageAccountName)
         $storage = New-AzureRmStorageAccount -ResourceGroupName $script:ResourceGroupName -StorageAccountName $storageAccountName -Location $script:AzureLocation -Type $script:StorageSkuName -Kind $script:StorageKind
     }
     return $storage
@@ -575,7 +573,7 @@ Function GetEnvSetting()
     {
         if ($errorOnNull)
         {
-            Write-Error -Category ObjectNotFound -Message ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Cannot locate setting '{0}' in deployment settings file {1}." -f $settingName, $script:DeploymentSettingsFile)
+            Write-Error -Category ObjectNotFound -Message ("$(Get-Date –f $TIME_STAMP_FORMAT) - Cannot locate setting '{0}' in deployment settings file {1}." -f $settingName, $script:DeploymentSettingsFile)
             throw ("Cannot locate setting '{0}' in deployment settings file {1}." -f $settingName, $script:DeploymentSettingsFile)
         }
     }
@@ -591,12 +589,12 @@ Function PutEnvSetting()
 
     if (EnvSettingExists $settingName)
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - {0} changed to {1}" -f $settingName, $settingValue)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - {0} changed to {1}" -f $settingName, $settingValue)
         $script:DeploymentSettingsXml.Environment.SelectSingleNode("//setting[@name = '$settingName']").value = $settingValue
     }
     else
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Added {0} with value {1}" -f $settingName, $settingValue)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Added {0} with value {1}" -f $settingName, $settingValue)
         $node = $script:DeploymentSettingsXml.CreateElement("setting")
         $node.SetAttribute("name", $settingName) | Out-Null
         $node.SetAttribute("value", $settingValue) | Out-Null
@@ -613,7 +611,7 @@ Function GetAzureAccountInfo()
 {
     if ($script:PresetAzureAccountName -ne $null -and $script:PresetAzureAccountName -ne "")
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Using preset account name '{0}'" -f $script:PresetAzureAccountName)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using preset account name '{0}'" -f $script:PresetAzureAccountName)
         $account = Get-AzureAccount $script:PresetAzureAccountName
 
     }
@@ -622,12 +620,12 @@ Function GetAzureAccountInfo()
         $accounts = Get-AzureAccount
         if ($accounts -eq $null)
         {
-            Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Add new Azure account"
+            Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Add new Azure account"
             $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
         }
         else 
         {
-            Write-Host "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Select Azure account to use"
+            Write-Host "$(Get-Date –f $TIME_STAMP_FORMAT) - Select Azure account to use"
             $script:OptionIndex = 1
             Write-Host
             Write-Host ("Available accounts in Azure environment '{0}':" -f $script:AzureEnvironment.Name)
@@ -663,10 +661,10 @@ Function GetAzureAccountInfo()
             }
         }
     }
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Account Id to use is '{0}'" -f $account.Id)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Account Id to use is '{0}'" -f $account.Id)
     if ([string]::IsNullOrEmpty($account.Id))
     {
-            Write-Error -("$(Get-Date â€“f $TIME_STAMP_FORMAT) - There was no account selected. Please check and try again.")
+            Write-Error -("$(Get-Date –f $TIME_STAMP_FORMAT) - There was no account selected. Please check and try again.")
             throw ("There was no account selected. Please check and try again.")
     }
     # Workaround since errors pipe to the output stream
@@ -679,21 +677,21 @@ Function ValidateLoginCredentials()
     $account = Get-AzureAccount -Name $script:AzureAccountName
     if ($account -eq $null)
     {
-        Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Account '{0}' is unknown in Azure environment '{1}'. Add it." -f $script:AzureAccountName, $script:AzureEnvironment.Name)
+        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Account '{0}' is unknown in Azure environment '{1}'. Add it." -f $script:AzureAccountName, $script:AzureEnvironment.Name)
         $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
     }
     if ((Get-AzureSubscription -SubscriptionId ($account.Subscriptions -replace '(?:\r\n)',',').split(",")[0]) -eq $null)
     {
-        Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - No subscriptions. Add account")
+        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - No subscriptions. Add account")
         Add-AzureAccount -Environment $script:AzureEnvironment.Name | Out-Null
     }
     
     # Validate Azure RM
     $profileFile = ($IotSuiteRootPath + "/$($script:AzureAccountName).user")
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Check for profile file '{0}'" -f $profileFile)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check for profile file '{0}'" -f $profileFile)
     if (Test-Path "$profileFile") 
     {
-        Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Use saved profile from '{0}" -f $profileFile)
+        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Use saved profile from '{0}" -f $profileFile)
         if ($script:AzurePowershellVersionMajor -le 3)
         {
             $rmProfile = Select-AzureRmProfile -Path "$profileFile"
@@ -705,13 +703,13 @@ Function ValidateLoginCredentials()
         $rmProfileLoaded = ($rmProfile -ne $null) -and ($rmProfile.Context -ne $null) -and ((Get-AzureRmSubscription) -ne $null)
     }
     if ($rmProfileLoaded -ne $true) {
-        Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Logging in to your AzureRM account"
+        Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Logging in to your AzureRM account"
         try {
             Login-AzureRmAccount -EnvironmentName $script:AzureEnvironment.Name -ErrorAction Stop | Out-Null
         }
         catch
         {
-            Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - The login to the Azure account was not successful. Please run the script again.")
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - The login to the Azure account was not successful. Please run the script again.")
             throw ("The login to the Azure account was not successful. Please run the script again.")
         }
         if ($script:AzurePowershellVersionMajor -le 3)
@@ -735,12 +733,12 @@ Function HostEntryExists()
     {
         if ([Net.Dns]::GetHostEntry($hostName) -ne $null)
         {
-            Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Found hostname: {0}" -f $hostName)
+            Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Found hostname: {0}" -f $hostName)
             return $true
         }
     }
     catch {}
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Did not find hostname: {0}" -f $hostName)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Did not find hostname: {0}" -f $hostName)
     return $false
 }
 
@@ -798,14 +796,14 @@ Function RandomPassword ($length = 15)
 Function CreateAadClientSecret()
 {
     $newPassword = RandomPassword
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - New Password: {0}" -f $newPassword)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - New Password: {0}" -f $newPassword)
     Remove-AzureRmADAppCredential -ApplicationId $script:AadClientId -All -Force
     # create new secret for web app, $secret is converted to PSAD type
     # keep $newPassword to be returned as a string
     $secret = $newPassword
     $startDate = Get-Date
     $secret = New-AzureRmADAppCredential -ApplicationId $script:AadClientId -StartDate $startDate -EndDate $startDate.AddYears(1) -Password $secret
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - New Secret Id: {0}" -f $secret.KeyId)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - New Secret Id: {0}" -f $secret.KeyId)
     return $newPassword
 }
 
@@ -818,12 +816,12 @@ Function GetAadTenant()
     $tenants = Get-AzureRmTenant
     if ($tenants.Count -eq 0)
     {
-        Write-Error  ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - No Active Directory domains found for '{0}'" -f $script:AzureAccountName)
+        Write-Error  ("$(Get-Date –f $TIME_STAMP_FORMAT) - No Active Directory domains found for '{0}'" -f $script:AzureAccountName)
         throw ("No Active Directory domains found for '{0}'" -f $script:AzureAccountName)
     }
     if ($tenants.Count -eq 1)
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Only one tenant found, use it. TenantId: '{0}' with IdentifierUri '{1}' exists in Azure environment '{2}'" -f $script:WebAppDisplayName , $script:WebAppIdentifierUri, $script:AzureEnvironment.Name)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Only one tenant found, use it. TenantId: '{0}' with IdentifierUri '{1}' exists in Azure environment '{2}'" -f $script:WebAppDisplayName , $script:WebAppIdentifierUri, $script:AzureEnvironment.Name)
         if ($script:AzurePowershellVersionMajor -le 3)
         {
             $tenantId = $tenants[0].TenantId
@@ -862,7 +860,7 @@ Function GetAadTenant()
                 $directories += $directory
                 if ($script:PresetAzureDirectoryName -ne $null -and $script:PresetAzureDirectoryName -eq ($result.userPrincipalName.Split('@')[1]))
                 {
-                    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Using preset directory name '{0}'" -f $script:PresetAzureDirectoryName)
+                    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using preset directory name '{0}'" -f $script:PresetAzureDirectoryName)
                     $selectedIndex = $index
                     break
                 }
@@ -899,7 +897,7 @@ Function GetAadTenant()
         }
     }
 
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - AAD Tenant ID is '{0}'" -f $tenantId)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - AAD Tenant ID is '{0}'" -f $tenantId)
     # Workaround since errors pipe to the output stream
     $script:GetOrSetSettingValue = $tenantId -as [string]
 }
@@ -907,7 +905,7 @@ Function GetAadTenant()
 Function UpdateAadApp($tenantId)
 {
     # Check for application existence
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Check if application '{0}' with IdentifierUri '{1}' exists in Azure environment '{2}'" -f $script:WebAppDisplayName , $script:WebAppIdentifierUri, $script:AzureEnvironment.Name)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check if application '{0}' with IdentifierUri '{1}' exists in Azure environment '{2}'" -f $script:WebAppDisplayName , $script:WebAppIdentifierUri, $script:AzureEnvironment.Name)
     $uri = "{0}{1}/applications?api-version=1.6" -f $script:AzureEnvironment.GraphUrl, $tenantId
     $searchUri = "{0}&`$filter=identifierUris/any(uri:uri%20eq%20'{1}')" -f $uri, [System.Web.HttpUtility]::UrlEncode($script:WebAppIdentifierUri)
     $authResult = GetAuthenticationResult $tenantId $script:AzureEnvironment.ActiveDirectoryAuthority $script:AzureEnvironment.GraphUrl $script:AzureAccountName
@@ -915,25 +913,25 @@ Function UpdateAadApp($tenantId)
     $result = Invoke-RestMethod -Method "GET" -Uri $searchUri -Headers @{"Authorization"=$header;"Content-Type"="application/json"}
     if ($result.value.Count -eq 0)
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Application '{0}' not found, create it with IdentifierUri '{1}'" -f $script:WebAppDisplayName, $script:WebAppIdentifierUri)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Application '{0}' not found, create it with IdentifierUri '{1}'" -f $script:WebAppDisplayName, $script:WebAppIdentifierUri)
         $body = ReplaceFileParameters ("{0}/Application.json" -f $script:DeploymentConfigPath) -arguments @($script:WebAppHomepage, $script:WebAppDisplayName, $script:WebAppIdentifierUri)
         $result = Invoke-RestMethod -Method "POST" -Uri $uri -Headers @{"Authorization"=$header;"Content-Type"="application/json"} -Body $body -ErrorAction SilentlyContinue
         if ($result -eq $null)
         {
-            Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Unable to create application '{0}' with IdentifierUri '{1}'" -f $script:WebAppDisplayName, $script:WebAppIdentifierUri)
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Unable to create application '{0}' with IdentifierUri '{1}'" -f $script:WebAppDisplayName, $script:WebAppIdentifierUri)
             throw "Unable to create application '$script:WebAppDisplayName'"
         }
         if ([string]::IsNullOrEmpty($result.appId))
         {
-            Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Unable to create application '{0}' with IdentifierUri '{1}', returned AppId is null." -f $script:WebAppDisplayName, $script:WebAppIdentifierUri)
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Unable to create application '{0}' with IdentifierUri '{1}', returned AppId is null." -f $script:WebAppDisplayName, $script:WebAppIdentifierUri)
             throw ("Unable to create application '{0}', returned AppId is null." -f $script:WebAppDisplayName)
         }
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Successfully created application '{0}' with Id '{1}' and IdentifierUri '{2}'" -f $result.displayName, $result.appId, $result.identifierUri)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Successfully created application '{0}' with Id '{1}' and IdentifierUri '{2}'" -f $result.displayName, $result.appId, $result.identifierUri)
         $applicationId = $result.appId
     }
     else
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Found application '{0}' with Id '{1}' and IdentifierUri '{2}'" -f $result.value[0].displayName, $result.value[0].appId, $result[0].identifierUri)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Found application '{0}' with Id '{1}' and IdentifierUri '{2}'" -f $result.value[0].displayName, $result.value[0].appId, $result[0].identifierUri)
         $applicationId = $result.value[0].appId
     }
 
@@ -941,52 +939,52 @@ Function UpdateAadApp($tenantId)
     UpdateEnvSetting "AadClientId" $applicationId
 
     # Check for ServicePrincipal
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Check for service principal in '{0}', tenant '{1}' for application '{2}' with appID '{3}'" -f  $script:AzureEnvironment.Name, $tenantId, $script:WebAppDisplayName, $applicationId)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check for service principal in '{0}', tenant '{1}' for application '{2}' with appID '{3}'" -f  $script:AzureEnvironment.Name, $tenantId, $script:WebAppDisplayName, $applicationId)
     $uri = "{0}{1}/servicePrincipals?api-version=1.6" -f $script:AzureEnvironment.GraphUrl, $tenantId
     $searchUri = "{0}&`$filter=appId%20eq%20'{1}'" -f $uri, $applicationId
     $result = Invoke-RestMethod -Method "GET" -Uri $searchUri -Headers @{"Authorization"=$header;"Content-Type"="application/json"}
     if ($result.value.Count -eq 0)
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - No service principal found. Create one in '{0}', tenant '{1}' for application '{2}' with appID '{3}'" -f  $script:AzureEnvironment.Name, $tenantId, $script:WebAppDisplayName, $applicationId)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - No service principal found. Create one in '{0}', tenant '{1}' for application '{2}' with appID '{3}'" -f  $script:AzureEnvironment.Name, $tenantId, $script:WebAppDisplayName, $applicationId)
         $body = "{ `"appId`": `"$applicationId`" }"
         $result = Invoke-RestMethod -Method "POST" -Uri $uri -Headers @{"Authorization"=$header;"Content-Type"="application/json"} -Body $body -ErrorAction SilentlyContinue
         if ($result -eq $null)
         {
-            Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Unable to create ServicePrincipal for application '{0}' with appID '{1}'" -f $script:WebAppDisplayName, $applicationId)
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Unable to create ServicePrincipal for application '{0}' with appID '{1}'" -f $script:WebAppDisplayName, $applicationId)
             throw ("Unable to create ServicePrincipal for application '{0}' with appID '{1}'" -f $script:WebAppDisplayName, $applicationId)
         }
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Successfully created service principal '{0}' with resource Id '{1}'" -f $result.displayName, $result.objectId)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Successfully created service principal '{0}' with resource Id '{1}'" -f $result.displayName, $result.objectId)
         $resourceId = $result.objectId
         $roleId = ($result.appRoles| ?{$_.value -eq "admin"}).Id
     }
     else
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Found service principal '{0}' with resource Id '{1}'" -f $result.displayName, $result.value[0].objectId)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Found service principal '{0}' with resource Id '{1}'" -f $result.displayName, $result.value[0].objectId)
         $resourceId = $result.value[0].objectId
         $roleId = ($result.value[0].appRoles| ?{$_.value -eq "admin"}).Id
     }
 
     # Check for Assigned User
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Check for app role assigment in '{0}', tenant '{1}' for user with Id '{2}'" -f  $script:AzureEnvironment.Name, $tenantId, $authResult.UserInfo.UniqueId)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check for app role assigment in '{0}', tenant '{1}' for user with Id '{2}'" -f  $script:AzureEnvironment.Name, $tenantId, $authResult.UserInfo.UniqueId)
     $uri = "{0}{1}/users/{2}/appRoleAssignments?api-version=1.6" -f $script:AzureEnvironment.GraphUrl, $tenantId, $authResult.UserInfo.UniqueId
     $result = Invoke-RestMethod -Method "GET" -Uri $uri -Headers @{"Authorization"=$header;"Content-Type"="application/json"}
     if (($result.value | ?{$_.ResourceId -eq $resourceId}) -eq $null)
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Create app role assigment 'principalId' in '{0}', tenant '{1}' for user with Id '{2}'" -f  $script:AzureEnvironment.Name, $tenantId, $authResult.UserInfo.UniqueId)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Create app role assigment 'principalId' in '{0}', tenant '{1}' for user with Id '{2}'" -f  $script:AzureEnvironment.Name, $tenantId, $authResult.UserInfo.UniqueId)
         $body = "{ `"id`": `"$roleId`", `"principalId`": `"$($authResult.UserInfo.UniqueId)`", `"resourceId`": `"$resourceId`" }"
         $result = Invoke-RestMethod -Method "POST" -Uri $uri -Headers @{"Authorization"=$header;"Content-Type"="application/json"} -Body $body -ErrorAction SilentlyContinue
         if ($result -eq $null)
         {
-            Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Unable to create app role assignment for application '{0}' with appID '{1}' for current user - will be Implicit Readonly" -f $script:WebAppDisplayName, $applicationId)
+            Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Unable to create app role assignment for application '{0}' with appID '{1}' for current user - will be Implicit Readonly" -f $script:WebAppDisplayName, $applicationId)
         }
         else
         {
-            Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Successfully created 'Service Principal' app role assignment for user '{0}' for application '{1}' with appID '{2}''" -f $authResult.UserInfo.UniqueId,$result.resourceDisplayName, $applicationId)
+            Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Successfully created 'Service Principal' app role assignment for user '{0}' for application '{1}' with appID '{2}''" -f $authResult.UserInfo.UniqueId,$result.resourceDisplayName, $applicationId)
         }
     }
     else
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - User with Id '{0}' has role 'Service Principal' already assigned for the application '{1}' with appID '{2}'" -f $authResult.UserInfo.UniqueId,$result.resourceDisplayName, $applicationId)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - User with Id '{0}' has role 'Service Principal' already assigned for the application '{1}' with appID '{2}'" -f $authResult.UserInfo.UniqueId,$result.resourceDisplayName, $applicationId)
     }
 }
 
@@ -995,7 +993,7 @@ Function InitializeDeploymentSettings()
     #
     # Initialize deployment settings
     #
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Using deployment settings filename {0}" -f $script:DeploymentSettingsFile)
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using deployment settings filename {0}" -f $script:DeploymentSettingsFile)
 
     # read settings into XML variable
     if (!(Test-Path "$script:DeploymentSettingsFile"))
@@ -1011,12 +1009,12 @@ Function InitializeEnvironment()
     # Azure login
     #
     $script:AzureAccountName = GetOrSetEnvSetting "AzureAccountName" "GetAzureAccountInfo" 
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Validate Azure account '{0}'" -f $script:AzureAccountName)
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Validate Azure account '{0}'" -f $script:AzureAccountName)
     ValidateLoginCredentials
 
     if ($script:PresetAzureSubscriptionName -ne $null -and $script:PresetAzuresubscriptionName -ne "")
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Using preset subscription name '{0}'" -f $script:PresetAzureSubscriptionName)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using preset subscription name '{0}'" -f $script:PresetAzureSubscriptionName)
         $subscriptionId = Get-AzureRmSubscription -SubscriptionName $script:PresetAzureSubscriptionName
     }
 
@@ -1028,7 +1026,7 @@ Function InitializeEnvironment()
         $subscriptionId = GetEnvSetting "SubscriptionId"
         if ([string]::IsNullOrEmpty($subscriptionId))
         {
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Select an Azure subscription to use ")
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Select an Azure subscription to use ")
             $subscriptions = Get-AzureRMSubscription
             if ($subscriptions.Count -eq 1)
             {
@@ -1112,7 +1110,7 @@ Function InitializeEnvironment()
     }
     $tenantId = $rmSubscription.TenantId
     Set-AzureRmContext -SubscriptionName $subscriptionName -TenantId $tenantId | Out-Null
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Selected Azure subscription {0} with ID {1}" -f $subscriptionName, $subscriptionId)
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Selected Azure subscription {0} with ID {1}" -f $subscriptionName, $subscriptionId)
 
     # Initialize Tenant
     $script:AadTenant = GetOrSetEnvSetting "AadTenant" "GetAADTenant"
@@ -1126,7 +1124,7 @@ Function InitializeEnvironment()
     #
     if ($script:PresetAzureLocationName -ne $null -and $script:PresetAzureLocationName -ne "")
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Using preset allocation location name '{0}'" -f $script:PresetAzureLocationName)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using preset allocation location name '{0}'" -f $script:PresetAzureLocationName)
         $script:AzureLocation = $script:PresetAzureLocationName
     }
     else
@@ -1134,11 +1132,11 @@ Function InitializeEnvironment()
         $script:AzureLocation = GetEnvSetting "AzureLocation"
         if ([string]::IsNullOrEmpty($script:AzureLocation))
         {
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Select Azure location to use")
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Select Azure location to use")
             $script:AzureLocation = GetOrSetEnvSetting "AzureLocation" "GetAzureLocation"
         }
     }
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Azure location to use is '{0}'" -f $script:AzureLocation)
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Azure location to use is '{0}'" -f $script:AzureLocation)
 }
 
 # Replace browser endpoint configuration file in WebApp
@@ -1158,7 +1156,7 @@ Function FixWebAppPackage()
     foreach ($entry in $entries)
     { 
         $fullPath = $entry.FullName
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Found '{0}' in archive" -f $fullPath)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Found '{0}' in archive" -f $fullPath)
         $entry.Delete()
         [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipArchive, $browserEndpointsFullName, $fullPath) | Out-Null
     }
@@ -1193,7 +1191,7 @@ Function GetResourceObject
 
 Function SimulationBuild
 {
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Building Simulation for configuration '{0}'." -f $script:Configuration)
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building Simulation for configuration '{0}'." -f $script:Configuration)
 
     # Check installation of required tools.
     CheckCommandAvailability "dotnet.exe" | Out-Null
@@ -1280,18 +1278,18 @@ Function Build()
     CheckCommandAvailability "msbuild.exe" | Out-Null
 
     # Restore packages.
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Restoring nuget packages for solution.")
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring nuget packages for solution.")
     Invoke-Expression ".nuget/nuget restore ./Connectedfactory.sln"
     if ($LASTEXITCODE -ne 0)
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Restoring nuget packages for solution failed.")
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring nuget packages for solution failed.")
         throw "Restoring nuget packages for solution failed."
     }
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Restoring dotnet packages for solution.")
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring dotnet packages for solution.")
     Invoke-Expression "dotnet restore"
     if ($LASTEXITCODE -ne 0)
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Restoring dotnet packages for solution failed.")
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring dotnet packages for solution failed.")
         throw "Restoring dotnet packages for solution failed."
     }
 
@@ -1302,18 +1300,18 @@ Function Build()
     }
 
     # Build the solution.
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Building Connectedfactory.sln for configuration '{0}'." -f $script:Configuration)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building Connectedfactory.sln for configuration '{0}'." -f $script:Configuration)
     Invoke-Expression "msbuild Connectedfactory.sln /v:m /p:Configuration=$script:Configuration $script:EnforceWebAppAdminMode"
     if ($LASTEXITCODE -ne 0)
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Building Connectedfactory.sln failed.")
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building Connectedfactory.sln failed.")
         throw "Building Connectedfactory.sln failed."
     }
 }
 
 Function Package()
 {
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Packaging for configuration '{0}'." -f $script:Configuration)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Packaging for configuration '{0}'." -f $script:Configuration)
 
     # Check installation of required tools.
     CheckCommandAvailability "msbuild.exe" | Out-Null
@@ -1321,7 +1319,7 @@ Function Package()
     Invoke-Expression "msbuild $script:IotSuiteRootPath/WebApp/WebApp.csproj /v:m /T:Package /p:Configuration=$script:Configuration"
     if ($LASTEXITCODE -ne 0)
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Building WebApp.csproj failed.")
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building WebApp.csproj failed.")
         throw "Building Webapp.csproj failed."
     }
 
@@ -1332,23 +1330,23 @@ Function Package()
     Write-Host 'Cleaning up previously generated packages';
     if ((Test-Path "$packageDir/WebApp.zip") -eq $true) 
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Remove WebApp '{0}/WebApp.zip'" -f $packageDir)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Remove WebApp '{0}/WebApp.zip'" -f $packageDir)
         Remove-Item -Force "$packageDir/WebApp.zip" 2> $null
     }
 
     if ((Test-Path "$webPackage") -ne $true) 
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Failed to find WebApp package in directory '{0}'" -f $webPackage)
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Failed to find WebApp package in directory '{0}'" -f $webPackage)
         throw "Failed to find package for the WebApp."
     }
 
     if (((Test-Path "$packageDir") -ne $true)) 
     {
-        Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Creating package directory '{0}'" -f $packageDir)
+        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Creating package directory '{0}'" -f $packageDir)
         New-Item -Path "$packageDir" -ItemType Directory | Out-Null
     }
 
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Copying packages to package directory '{0}'" -f $packageDir)
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Copying packages to package directory '{0}'" -f $packageDir)
     Copy-Item $webPackage -Destination $packageDir | Out-Null
 }
 
@@ -1361,7 +1359,7 @@ Function UploadFileToContainerBlob()
         [Parameter(Mandatory=$true,Position=3)] [bool] $secure
     )
 
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Upload file from '{0}' to storage account '{1}' in resource group '{2} as container '{3}' (secure: {4})" -f $filePath, $storageAccountName, $script:ResourceGroupName, $containerName, $secure)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Upload file from '{0}' to storage account '{1}' in resource group '{2} as container '{3}' (secure: {4})" -f $filePath, $storageAccountName, $script:ResourceGroupName, $containerName, $secure)
     $containerName = $containerName.ToLowerInvariant()
     $file = Get-Item -Path "$filePath"
     $fileName = $file.Name
@@ -1371,7 +1369,7 @@ Function UploadFileToContainerBlob()
     $maxTries = $MAX_TRIES
     if (!(AzureNameExists $storageAccountName "microsoft.storage/storageaccounts" $context.StorageAccount.BlobEndpoint.Host))
     {
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Waiting for storage account '{0} to resolve." -f $context.StorageAccount.BlobEndpoint.Host)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Waiting for storage account '{0} to resolve." -f $context.StorageAccount.BlobEndpoint.Host)
         while (!(AzureNameExists $storageAccountName "microsoft.storage/storageaccounts" $context.StorageAccount.BlobEndpoint.Host) -and $maxTries-- -gt 0)
         {
             Write-Progress -Activity "Resolving storage account endpoint" -Status "Resolving" -SecondsRemaining ($maxTries*$SECONDS_TO_SLEEP)
@@ -1390,18 +1388,18 @@ Function UploadFileToContainerBlob()
     if ($container -ne $null)
     {
         $maxTries = $MAX_TRIES
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Checking container '{0}'." -f $containerName) 
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Checking container '{0}'." -f $containerName) 
         while (!$container.Exists())
         {
             Write-Progress -Activity "Resolving storage account endpoint" -Status "Checking" -SecondsRemaining ($maxTries*$SECONDS_TO_SLEEP)
             sleep $SECONDS_TO_SLEEP
             if ($maxTries-- -le 0)
             {
-                Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Timed out waiting for container: {0}" -f $ContainerName)
+                Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Timed out waiting for container: {0}" -f $ContainerName)
                 throw ("Timed out waiting for container: {0}" -f $ContainerName)
             }
         }
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Checking blob '{0}'." -f $fileName) 
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Checking blob '{0}'." -f $fileName) 
         $blob = $container.GetBlobReference($fileName)
         if ($blob -ne $null)
         {
@@ -1412,19 +1410,19 @@ Function UploadFileToContainerBlob()
                 sleep $SECONDS_TO_SLEEP
                 if ($maxTries-- -le 0)
                 {
-                    Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Timed out waiting for blob '{0}'" -f $fileName)
+                    Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Timed out waiting for blob '{0}'" -f $fileName)
                     throw ("Timed out waiting for blob: {0}" -f $fileName)
                 }
             }
         }
         else
         {
-            Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Cannot find blob for file with name '{0}'" -f $fileName)
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Cannot find blob for file with name '{0}'" -f $fileName)
         }
     }
     else
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Cannot find container with name '{0}'" -f $containerName)
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Cannot find container with name '{0}'" -f $containerName)
     }
 
     if ($secure)
@@ -1435,13 +1433,13 @@ Function UploadFileToContainerBlob()
         $sasPolicy.Permissions = [Microsoft.WindowsAzure.Storage.Blob.SharedAccessBlobPermissions]::Read
         $sasToken = $blob.GetSharedAccessSignature($sasPolicy)
     }
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Blob URI is '{0}'" -f $blob.Uri.ToString() + $sasToken)
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Blob URI is '{0}'" -f $blob.Uri.ToString() + $sasToken)
     return $blob.Uri.ToString() + $sasToken
 }
 
 Function FinalizeWebPackages
 {
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Uploading packages")
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Uploading packages")
 
     # Set path correct
     $script:WebAppLocalPath = "$script:IoTSuiteRootPath/WebApp/obj/{0}/Package/WebApp.zip" -f $script:Configuration
@@ -1450,7 +1448,7 @@ Function FinalizeWebPackages
     UpdateBrowserEndpoints
 
     # Upload WebApp package
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Fix WebApp package")
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Fix WebApp package")
     FixWebAppPackage $script:WebAppLocalPath
 }
 
@@ -1466,7 +1464,7 @@ function RecordVmCommand
     
     if ($initScript -eq $false -and $deleteScript -eq $false -and $startScript -eq $false-and $stopScript -eq $false)
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - No switch set. Please check usage.")
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - No switch set. Please check usage.")
         throw ("No switch set. Please check usage.")
     }
     if ($initScript)
@@ -1514,7 +1512,7 @@ function StartStation
     $defaultPort = 51210
     if ($port -eq $null)
     { 
-        Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - For station '{0}' there was no port configured. Using default port 51210.." -f $containerInstance, $defaultPort)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - For station '{0}' there was no port configured. Using default port 51210.." -f $containerInstance, $defaultPort)
         $port = "$defaultPort" 
     }
 
@@ -1525,7 +1523,7 @@ function StartStation
     # Start the station
     $stationUri = (CreateStationUrl -net $net -station $station)
     $commandLine = "../buildOutput/Station.dll " + $station.Simulation.Id + " " + $stationUri.ToLower() + " " + $station.Simulation.Args
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Start Docker container for station node $hostName ...")
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Start Docker container for station node $hostName ...")
     $volumes = "-v $script:DockerRoot/$($script:DockerSharedFolder):/app/$script:DockerSharedFolder "
     $volumes +="-v $script:DockerRoot/$script:DockerLogsFolder/$($containerInstance):/app/$script:DockerLogsFolder"
     $vmCommand = "docker run -itd $volumes -w /app/buildOutput --name $hostName -h $hostName --network $net --restart always --expose $port simulation:latest $commandLine"
@@ -1590,7 +1588,7 @@ function StartMES
 
     # Start MES.
     $commandLine = "../buildOutput/MES.dll"
-    Write-Output("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Start Docker container for MES node $hostName ...");
+    Write-Output("$(Get-Date –f $TIME_STAMP_FORMAT) - Start Docker container for MES node $hostName ...");
     $volumes = "-v $script:DockerRoot/$($script:DockerSharedFolder):/app/$script:DockerSharedFolder "
     $volumes += "-v $script:DockerRoot/$script:DockerLogsFolder/$($containerInstance):/app/$script:DockerLogsFolder "
     $volumes += "-v $script:DockerRoot/$script:DockerConfigFolder/$($containerInstance):/app/$script:DockerConfigFolder"
@@ -1614,7 +1612,7 @@ function StartProxy
     RecordVmCommand -command $vmCommand -stopScript -deleteScript
 
     # Start proxy.
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Start Docker container for Proxy node $hostName ...")
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Start Docker container for Proxy node $hostName ...")
     $vmCommand = "docker run -itd -v $script:DockerRoot/$($script:DockerLogsFolder):/app/$script:DockerLogsFolder --name $hostName -h $hostName --network $net --restart always " + '$DOCKER_PROXY_REPO:$DOCKER_PROXY_VERSION ' + "-c " + '"$IOTHUB_CONNECTIONSTRING" ' + "-l /app/$script:DockerLogsFolder/proxy1.$net.log "
     RecordVmCommand -command $vmCommand -startScript
     $vmCommand = "sleep 5s"
@@ -1679,7 +1677,7 @@ function StartGWPublisher
     RecordVmCommand -command $vmCommand -stopScript -deleteScript
 
     # Start GW Publisher container in the VM and link to simulation container
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Start Docker container for GW Publisher node $hostName ...")
+    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Start Docker container for GW Publisher node $hostName ...")
     $volumes = "-v $script:DockerRoot/$($script:DockerSharedFolder):/app/$script:DockerSharedFolder "
     $volumes += "-v $script:DockerRoot/$script:DockerLogsFolder/$($hostName):/app/$script:DockerLogsFolder "
     $volumes += "-v $script:DockerRoot/$script:DockerConfigFolder/$($hostName):/app/$script:DockerConfigFolder"
@@ -1762,7 +1760,7 @@ function SimulationBuildScripts
         # Create a cert if we do not have one from a previous build.
         if (-not (Test-Path "$script:CreateCertsPath/certs/$script:DeploymentName/$script:UaSecretBaseName.der"))
         {
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Create certificate to secure OPC communication.");
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Create certificate to secure OPC communication.");
             Invoke-Expression "dotnet run -p $script:CreateCertsPath/CreateCerts.csproj $script:CreateCertsPath `"UA Web Client`" `"urn:localhost:Contoso:FactorySimulation:UA Web Client`""
             New-Item -Path "$script:CreateCertsPath/certs/$script:DeploymentName" -ItemType "Directory" -Force | Out-Null
             Move-Item "$script:CreateCertsPath/certs/$script:UaSecretBaseName.der" "$script:CreateCertsPath/certs/$script:DeploymentName/$script:UaSecretBaseName.der" -Force | Out-Null
@@ -1772,12 +1770,12 @@ function SimulationBuildScripts
             if ($script:Command -eq "local")
             {
                 # For a local build, we install the pfx into our local cert store.
-                Import-PfxCertificate -FilePath "$script:CreateCertsPath/private/$script:DeploymentName/$script:UaSecretBaseName.pfx" -CertStoreLocation cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $script:UaSecretPassword -Force â€“AsPlainText)
+                Import-PfxCertificate -FilePath "$script:CreateCertsPath/private/$script:DeploymentName/$script:UaSecretBaseName.pfx" -CertStoreLocation cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $script:UaSecretPassword -Force –AsPlainText)
             }
         }
         else
         {
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Using existing certificate for deployment '{0}'" -f $script:DeploymentName);
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using existing certificate for deployment '{0}'" -f $script:DeploymentName);
         }
         Copy-Item "$script:CreateCertsPath/certs/$script:DeploymentName/$script:UaSecretBaseName.der" "$script:SimulationBuildOutputPath/$script:DockerCertsFolder" -Force | Out-Null
 
@@ -1792,7 +1790,7 @@ function SimulationBuildScripts
         {
             # Create bridge network in vm and start proxy.
             $net = $network.ToLower()
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Create network $net ...");
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Create network $net ...");
             $vmCommand = "docker network create -d bridge -o 'com.docker.network.bridge.enable_icc'='true' $net"
             RecordVmCommand -command $vmCommand -initScript
             StartProxy -net $net
@@ -1803,7 +1801,7 @@ function SimulationBuildScripts
             # Start production lines.
             $net = $productionline.Simulation.Network.ToLower()
 
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Create production line " + $productionline.Simulation.Id + " on network $net ...")
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Create production line " + $productionline.Simulation.Id + " on network $net ...")
 
             StartStation -net $net -station ($productionLine.Stations | where { $_.Simulation.Type -eq "Assembly"})
             StartStation -net $net -station ($productionLine.Stations | where { $_.Simulation.Type -eq "Test"})
@@ -1811,7 +1809,7 @@ function SimulationBuildScripts
 
             StartMES -net $net -productionLine $productionLine
                 
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Production line " + $productionline.Simulation.Id + " complete!")
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Production line " + $productionline.Simulation.Id + " complete!")
         }
 
         foreach($network in $networks)
@@ -1825,7 +1823,7 @@ function SimulationBuildScripts
         foreach($network in $networks)
         {
             $net = $network.ToLower()
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Remove network $net ...");
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Remove network $net ...");
             $vmCommand = "docker network rm $net"
             RecordVmCommand -command $vmCommand -deleteScript
         }
@@ -1873,7 +1871,7 @@ Function GetOwnerObjectId()
         {
             # not found, but fill with UPN to avoid deployment error
             $result = $script:AzureAccountName
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Owner {0} object id not found" -f $result);
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Owner {0} object id not found" -f $result);
         }
     }
     return $result
@@ -1885,7 +1883,7 @@ function SimulationUpdate
     $iotHubOwnerConnectionString = GetEnvSetting "IotHubOwnerConnectionString"
     if ([string]::IsNullOrEmpty($iotHubOwnerConnectionString))
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - The configuration file '{0}.config.user' does not contain a vaild 'IotHubOwnerConnectionString'. Pls check." -f $script:DeploymentName)
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - The configuration file '{0}.config.user' does not contain a vaild 'IotHubOwnerConnectionString'. Pls check." -f $script:DeploymentName)
         throw ("The configuration file '{0}.config.user' does not contain a vaild 'IotHubOwnerConnectionString'. Pls check." -f $script:DeploymentName)
     }
 
@@ -1896,7 +1894,7 @@ function SimulationUpdate
     }
     catch 
     {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Can not update the simulation, because no VM with name '{0}' found in resource group '{1}'" -f $script:VmName, $script:ResourceGroupName)
+        Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Can not update the simulation, because no VM with name '{0}' found in resource group '{1}'" -f $script:VmName, $script:ResourceGroupName)
         throw ("Can not update the simulation, because no VM with name '{0}' found in resource group '{1}'" -f $script:VmName, $script:ResourceGroupName)
     }
 
@@ -1919,28 +1917,28 @@ function SimulationUpdate
     try
     {
         # Create a PSCredential object for SSH
-        $securePassword = ConvertTo-SecureStringÂ $script:VmAdminPassword -AsPlainText -Force
+        $securePassword = ConvertTo-SecureString $script:VmAdminPassword -AsPlainText -Force
         $sshCredentials = New-Object System.Management.Automation.PSCredential ($script:VmAdminUsername, $securePassword)
 
         # Create SSH session
         $ipAddress = Get-AzureRmPublicIpAddress -Name $script:VmName -ResourceGroupName $script:ResourceGroupName
-        Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - IP address of VM is '{0}'" -f $ipAddress.IpAddress)
+        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - IP address of VM is '{0}'" -f $ipAddress.IpAddress)
         $session = New-SSHSession $ipAddress.IpAddress -Credential $sshCredentials -AcceptKey -ConnectionTimeout ($script:SshTimeout * 1000)
         if ($Session -eq $null)
         {
-            Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Cannot create SSH session to VM '{0}'" -f  $ipAddress.IpAddress)
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Cannot create SSH session to VM '{0}'" -f  $ipAddress.IpAddress)
             throw ("Cannot create SSH session to VM '{0}'" -f  $ipAddress.IpAddress)
         }
         try
         {
             # Upload delete script and delete simulation.
             Set-SCPFile -LocalFile "$script:SimulationBuildOutputDeleteScript" -RemotePath $script:DockerRoot -ComputerName $ipAddress.IpAddress -Credential $sshCredentials -NoProgress -OperationTimeout ($script:SshTimeout * 3)
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Delete simulation.")
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Delete simulation.")
             $vmCommand = "chmod +x $script:DockerRoot/deletesimulation"
             $status = Invoke-SSHCommand -Sessionid $session.SessionId -TimeOut ($script:SshTimeout * 5) -Command $vmCommand
             if ($status.ExitStatus -ne 0)
             {
-                Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Failed to run $vmCommand in VM : $status")
+                Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Failed to run $vmCommand in VM : $status")
                 throw ("Failed to run $vmCommand in VM : $status")
             }
             $vmCommand = "$script:DockerRoot/deletesimulation `&> $script:DockerRoot/deletesimulation.log"
@@ -1948,23 +1946,23 @@ function SimulationUpdate
             Invoke-SSHCommand -Sessionid $session.SessionId -TimeOut $script:SshTimeout -Command $vmCommand | Out-Null
 
             # Copy compressed simulation binaries and scripts to VM
-            Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Upload simulation files to VM")
+            Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Upload simulation files to VM")
             Set-SCPFile -LocalFile "$script:SimulationPath/simulation" -RemotePath $script:DockerRoot -ComputerName $ipAddress.IpAddress -Credential $sshCredentials -NoProgress -OperationTimeout ($script:SshTimeout * 3)
             Set-SCPFile -LocalFile "$script:SimulationBuildOutputInitScript" -RemotePath $script:DockerRoot -ComputerName $ipAddress.IpAddress -Credential $sshCredentials -NoProgress -OperationTimeout ($script:SshTimeout * 3)
             $vmCommand = "chmod +x $script:DockerRoot/simulation"
             $status = Invoke-SSHCommand -Sessionid $session.SessionId -TimeOut $script:SshTimeout -Command $vmCommand
             if ($status.ExitStatus -ne 0)
             {
-                Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Failed to run $vmCommand in VM : $status")
+                Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Failed to run $vmCommand in VM : $status")
                 throw ("Failed to run $vmCommand in VM : $status")
             }
             # Initialize and start simulation.
-            Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Initialize and run simulation. This may take a while...")
+            Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Initialize and run simulation. This may take a while...")
             $vmCommand = "chmod +x $script:DockerRoot/initsimulation"
             $status = Invoke-SSHCommand -Sessionid $session.SessionId -TimeOut $script:SshTimeout -Command $vmCommand
             if ($status.ExitStatus -ne 0)
             {
-                Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Failed to run $vmCommand in VM : $status")
+                Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Failed to run $vmCommand in VM : $status")
                 throw ("Failed to run $vmCommand in VM : $status")
             }
             $iotHubOwnerConnectionString = GetEnvSetting "IotHubOwnerConnectionString"
@@ -1972,7 +1970,7 @@ function SimulationUpdate
             $status = Invoke-SSHCommand -Sessionid $session.SessionId -TimeOut (3*$script:SshTimeout) -Command $vmCommand
             if ($status.ExitStatus -ne 0)
             {
-                Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Failed to run $vmCommand in VM : $status")
+                Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Failed to run $vmCommand in VM : $status")
                 throw ("Failed to run $vmCommand in VM : $status")
             } 
         }
@@ -2015,7 +2013,7 @@ $EXPECTED_PSCX_MODULE_VERSION = "3.2.2"
 $EXPECTED_POSHSSH_MODULE_VERSION = "1.7.7"
 
 # Variable initialization
-$script:IoTSuiteRootPath = $BuildRepositoryLocalPath #Split-Path $MyInvocation.MyCommand.Path
+$script:IoTSuiteRootPath = Split-Path $MyInvocation.MyCommand.Path
 $script:SimulationPath = "$script:IoTSuiteRootPath/Simulation"
 $script:CreateCertsPath = "$script:SimulationPath/Factory/CreateCerts"
 $script:WebAppPath = "$script:IoTSuiteRootPath/WebApp"
@@ -2037,24 +2035,26 @@ $script:AzurePowershellVersionMajor = (Get-Module -ListAvailable -Name Azure).Ve
 CheckModuleVersion PSCX $EXPECTED_PSCX_MODULE_VERSION
 CheckModuleVersion Posh-SSH $EXPECTED_POSHSSH_MODULE_VERSION
 
+# Import and check installed Azure cmdlet version
+$script:AzurePowershellVersionMajor = (Get-Module -ListAvailable -Name Azure).Version.Major
+CheckModuleVersion PSCX $EXPECTED_PSCX_MODULE_VERSION
+CheckModuleVersion Posh-SSH $EXPECTED_POSHSSH_MODULE_VERSION
+
 # Validate command line semantic
 if ($script:Command -eq "cloud" -or $script:Command -eq "delete" -and $script:DeploymentName -eq "local")
 {
-    Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Command '{0}' requires a 'DeploymentName' parameter. 'local' is not allowed as value for the 'DeploymentName' parameter. Use the 'local' command to b" -f $script:Command)
+    Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Command '{0}' requires a 'DeploymentName' parameter. 'local' is not allowed as value for the 'DeploymentName' parameter. Use the 'local' command to b" -f $script:Command)
     throw ("Command '{0}' requires a 'DeploymentName' parameter" -f $script:Command)
 }
 if ($($script:Command -eq "local") -and ($script:DeploymentName -ne "local"))
 {
-    Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Command 'local' does not support use of the '-DeploymentName' parameter, but use a default name for the deployment.")
+    Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Command 'local' does not support use of the '-DeploymentName' parameter, but use a default name for the deployment.")
     throw ("Command 'local' does not support use of the '-DeploymentName' parameter, but use a default name for the deployment.")
 }
 
-# Install nuget if not there
-InstallNuget
-
 # Set deployment name
 $script:DeploymentName = $script:DeploymentName.ToLowerInvariant()
-Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Name of the deployment is '{0}'" -f $script:DeploymentName)
+Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Name of the deployment is '{0}'" -f $script:DeploymentName)
 
 # Initialize available Azure Cloud locations
 switch($script:AzureEnvironmentName)
@@ -2062,8 +2062,34 @@ switch($script:AzureEnvironmentName)
     "AzureCloud" {
         if ((Get-AzureRMEnvironment AzureCloud) -eq $null)
         {
-            Write-Verbose  "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Can not find AzureCloud environment. Adding it."
-            Add-AzureRMEnvironment â€“Name AzureCloud -EnableAdfsAuthentication $False -ActiveDirectoryServiceEndpointResourceId https://management.core.windows.net/ -GalleryUrl https://gallery.azure.com/ -ServiceManagementUrl https://management.core.windows.net/ -SqlDatabaseDnsSuffix .database.windows.net -StorageEndpointSuffix core.windows.net -ActiveDirectoryAuthority https://login.microsoftonline.com/ -GraphUrl https://graph.windows.net/ -trafficManagerDnsSuffix trafficmanager.net -AzureKeyVaultDnsSuffix vault.azure.net -AzureKeyVaultServiceEndpointResourceId https://vault.azure.net -ResourceManagerUrl https://management.azure.com/ -ManagementPortalUrl http://go.microsoft.com/fwlink/?LinkId=254433
+            Write-Verbose  "$(Get-Date –f $TIME_STAMP_FORMAT) - Can not find AzureCloud environment. Adding it."
+            Add-AzureRMEnvironment –Name AzureCloud -EnableAdfsAuthentication $False -ActiveDirectoryServiceEndpointResourceId https://management.core.windows.net/ -GalleryUrl https://gallery.azure.com/ -ServiceManagementUrl https://management.core.windows.net/ -SqlDatabaseDnsSuffix .database.windows.net -StorageEndpointSuffix core.windows.net -ActiveDirectoryAuthority https://login.microsoftonline.com/ -GraphUrl https://graph.windows.net/ -trafficManagerDnsSuffix trafficmanager.net -AzureKeyVaultDnsSuffix vault.azure.net -AzureKeyVaultServiceEndpointResourceId https://vault.azure.net -ResourceManagerUrl https://management.azure.com/ -ManagementPortalUrl http://go.microsoft.com/fwlink/?LinkId=254433
+        }
+
+        # Initialize public cloud suffixes.
+        $script:IotHubSuffix = "azure-devices.net"
+        $script:WebsiteSuffix = "azurewebsites.net"
+        $script:RdxSuffix = "timeseries.azure.com"
+        $script:docdbSuffix = "documents.azure.com"
+        # Set locations were all resource are available. This might need to get updated if resources are deployed to more locations.
+        $script:AzureLocations = @("West US", "North Europe", "West Europe")
+    }
+    default {throw ("'{0}' is not a supported Azure Cloud environment" -f $script:AzureEnvironmentName)}
+}
+$script:AzureEnvironment = Get-AzureEnvironment $script:AzureEnvironmentName
+
+# Set deployment name
+$script:DeploymentName = $script:DeploymentName.ToLowerInvariant()
+Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Name of the deployment is '{0}'" -f $script:DeploymentName)
+
+# Initialize available Azure Cloud locations
+switch($script:AzureEnvironmentName)
+{
+    "AzureCloud" {
+        if ((Get-AzureRMEnvironment AzureCloud) -eq $null)
+        {
+            Write-Verbose  "$(Get-Date –f $TIME_STAMP_FORMAT) - Can not find AzureCloud environment. Adding it."
+            Add-AzureRMEnvironment –Name AzureCloud -EnableAdfsAuthentication $False -ActiveDirectoryServiceEndpointResourceId https://management.core.windows.net/ -GalleryUrl https://gallery.azure.com/ -ServiceManagementUrl https://management.core.windows.net/ -SqlDatabaseDnsSuffix .database.windows.net -StorageEndpointSuffix core.windows.net -ActiveDirectoryAuthority https://login.microsoftonline.com/ -GraphUrl https://graph.windows.net/ -trafficManagerDnsSuffix trafficmanager.net -AzureKeyVaultDnsSuffix vault.azure.net -AzureKeyVaultServiceEndpointResourceId https://vault.azure.net -ResourceManagerUrl https://management.azure.com/ -ManagementPortalUrl http://go.microsoft.com/fwlink/?LinkId=254433
         }
 
         # Initialize public cloud suffixes.
@@ -2093,6 +2119,7 @@ else
     $script:WebAppHomepage = "https://{0}.{1}/" -f $script:DeploymentName, $script:WebsiteSuffix
     $script:CloudDeploy = $true
 }
+
 $script:WebAppIdentifierUri = $script:WebAppHomepage + $script:SuiteName
 $script:WebAppDisplayName = $script:SuiteName + "-app"
 $script:DeploymentTemplateFile = "$script:DeploymentConfigPath/ConnectedfactoryMapKey.json"
@@ -2116,105 +2143,9 @@ $script:DockerPublisherVersion = "2.1.1"
 $script:UaSecretBaseName = "UAWebClient"
 # Note: The password could only be changed if it is synced with the password used in CreateCerts.exe
 $script:UaSecretPassword = "password"
-
-# Load System.Web
-Add-Type -AssemblyName System.Web
-# Load System.IO.Compression.FileSystem
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-# Load System.Security.Cryptography.X509Certificates
-Add-Type -AssemblyName System.Security
-
-# Handle commands
-if ($script:Command -eq "clean")
-{
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Cleaning up the project")
-    Get-ChildItem -Recurse "$script:IoTSuiteRootPath/packages"  | ForEach-Object { Remove-Item -Force -Recurse -Path $_.FullName }
-    Get-ChildItem -Recurse -Directory build_output | ForEach-Object { Remove-Item -Force -Recurse -Path $_.FullName }
-    Get-ChildItem -Recurse -Directory obj | ForEach-Object { Remove-Item -Recurse -Force -Path $_.FullName }
-    Get-ChildItem -Recurse -Directory bin | ForEach-Object { Remove-Item -Recurse -Force -Path $_.FullName }
-    exit
-}
-
-# Build everything for build and updatesimulation commands
-if ($script:Command -eq "build" -or $script:Command -eq "updatesimulation")
-{
-    # Build the solution
-    Build
-
-    # Package and upload solution WebPackages
-    Package
-    FinalizeWebPackages
-
-    # Build the simulation
-    SimulationBuild
-
-    # Build simulation scripts
-    SimulationBuildScripts
-
-    # Compressed simulation binaries
-    Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Build compressed archive"
-    Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
-    Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
-    Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
-    Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
-
-    # We are done in case of a build command
-    if ($script:Command -eq "build")
-    {
-        exit
-    }
-}
-
-if ($script:Command -eq "delete")
-{
-    # Remove the resource group.
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Check if resource group with name '{0}' exists." -f $script:SuiteName)
-    $resourceGroup = Get-AzureRmResourceGroup -Name $script:SuiteName -ErrorAction SilentlyContinue
-    if ($resourceGroup -ne $null)
-    {
-        Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Resource group found. Remove it. This may take a while.")
-        Remove-AzureRmResourceGroup -Name $script:SuiteName -Force -ErrorAction SilentlyContinue | Out-Null
-    }
-    else
-    {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Cannot find resource group name '{0}'. Have you selected the correct subscription by Select-AzureRmSubscription?" -f $script:SuiteName)
-        throw ("Cannot find resource group name '{0}'. Do you have selected the correct subscription by Select-AzureRmSubscription?" -f $script:SuiteName)
-    }
-
-    # Remove the WebApp.
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Check if WebApp with the following IdentifierUri'{0}' exists" -f $script:WebAppIdentifierUri)
-    $webApp = Get-AzureRmADApplication -IdentifierUri $script:WebAppIdentifierUri  -ErrorAction SilentlyContinue
-    if ($webApp -ne $null)
-    {
-        Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - WebApp found. Remove it.")
-        Remove-AzureRmADApplication -ObjectId $webApp.ObjectId -Force -ErrorAction SilentlyContinue
-    }
-
-    # Delete the deployment settings file.
-    Write-Output Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Delete existing settings file '{0}'" -f $script:DeploymentSettingsFile)
-    Remove-Item $script:DeploymentSettingsFile -Force -ErrorAction SilentlyContinue | Out-Null
-
-    # Delete deployment certificates.
-    Write-Output Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Delete existing certificates")
-    Remove-Item -Recurse -Path "$script:CreateCertsPath/certs/$script:DeploymentName" -Force -ErrorAction SilentlyContinue | Out-Null
-    Remove-Item -Recurse -Path "$script:CreateCertsPath/private/$script:DeploymentName" -Force -ErrorAction SilentlyContinue | Out-Null
-    exit
-}
-
 # Initialize deployment settings.
-Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - InitializeDeployment settings for'{0}'" -f $script:DeploymentName)
+Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - InitializeDeployment settings for'{0}'" -f $script:DeploymentName)
 InitializeDeploymentSettings
-
-# Initialize Azure environment, but not for updatesimulation command.
-if ($script:Command -ne "updatesimulation")
-{
-    # Clear DNS
-    ClearDnsCache
-
-    # Sets Azure Account, Location, Name validation and AAD application.
-    InitializeEnvironment 
-}
-
 # Generate and persist VM admin password.
 if ([string]::IsNullOrEmpty($script:VmAdminPassword))
 {
@@ -2272,318 +2203,3 @@ else
 DetectIoTHubDNS
 
 # Initialize cloud related variables
-$script:SuiteExists = (Find-AzureRmResourceGroup -Tag @{"IotSuiteType" = $script:SuiteType} | Where-Object {$_.name -eq $script:SuiteName -or $_.ResourceGroupName -eq $script:SuiteName}) -ne $null
-Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Get resource group name for suiteName '{0}' and suiteType '{1}'" -f $script:SuiteName, $script:SuiteType)
-$script:ResourceGroupName = (GetResourceGroup).ResourceGroupName
-Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Resourcegroup name is '{0}'" -f $script:ResourceGroupName)
-$script:StorageAccount = GetAzureStorageAccount
-$script:StorageAccountBlobEndpoint = (Get-AzureRmStorageAccount  -ResourceGroupName $script:ResourceGroupName -Name $script:StorageAccount.StorageAccountName).PrimaryEndpoints.Blob
-$script:IoTHubName = GetAzureIotHubName
-$script:VmName = GetAzureVmName
-$script:RdxEnvironmentName = GetAzureRdxName
-$script:ArmParameter = @{}
-
-# Update the simulation in the VM
-if ($script:Command -eq "updatesimulation")
-{
-    # Check if resource group and VM exists.
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Validate resource group name '{0}' existence" -f $script:ResourceGroupName)
-    $resourceGroup = Get-AzureRmResourceGroup -Name $script:ResourceGroupName -ErrorAction SilentlyContinue
-    if ($resourceGroup -eq $null)
-    {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Resource group {0} does not exist." -f $script:ResourceGroupName)
-        throw ("Resource group {0} does not exist." -f $script:ResourceGroupName)
-    }
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Check if VM exists in resource group '{0}'" -f $script:ResourceGroupName)
-    $vmResource = Find-AzureRmResource -ResourceGroupNameContains $script:ResourceGroupName -ResourceType Microsoft.Compute/VirtualMachines -ResourceNameContains $script:ResourceGroupName -ErrorAction SilentlyContinue
-    if ($vmResource -eq $null)
-    {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - There is no VM '{0}' in resource group '{1}'." -f $script:ResourceGroupName, $script:ResourceGroupName)
-        throw ("There is no VM with name '{0}' in resource group '{1}'." -f $script:ResourceGroupName, $script:ResourceGroupName)
-    }
-
-    # Update the simulation.
-    Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Upload and start the simulation"
-    SimulationUpdate
-    UpdateBrowserEndpoints
-    exit
-}
-
-# Respect existing Sku values
-if ($script:SuiteExists)
-{
-    # Block redeployment
-    if ($script:Command -eq "local" -or $script:Command -eq "cloud" -and $script:Force -eq $false)
-    {
-        Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - A deployment with name '{0}' already exists. Please use parameter -Force to enforce a redeployment." -f $script:SuiteName)
-        throw ("An deployment with name '{0}' does already exists. Please use parameter -Force to enforce redeployment." -f $script:SuiteName)
-    }
-
-    try 
-    {
-        $storageResource = Get-AzureRmResource -ResourceName $script:StorageAccount.StorageAccountName -ResourceType Microsoft.Â´Storage/storageAccounts -ResourceGroupName $script:ResourceGroupName
-        $script:StorageSkuName = $storageResource.Sku.name
-        $script:StorageKind = $storageResource.Kind
-    }
-    catch {}
-
-    try 
-    {
-        $iotHubResource = Get-AzureRmResource -ResourceName $script:IoTHubName -ResourceType Microsoft.Devices/IoTHubs -ResourceGroupName $script:ResourceGroupName
-        $script:IoTHubSkuName = $iotHubResource.Sku.name
-    }
-    catch {}
-
-    try 
-    {
-        $webResource = Get-AzureRmResource -ResourceName $script:WebsiteName -ResourceType Microsoft.Web/sites -ResourceGroupName $script:ResourceGroupName
-        $webPlanResource = Get-AzureRmResource -ResourceId $webResource.Properties.serverFarmId
-        $script:WebPlanSkuName = $webPlanResource.sku.name
-        $script:WebWorkerSize = $webPlanResource.containerSize
-        $script:WebWorkerCount = $webPlanResource.maxNumberOfWorkers
-    }
-    catch {}
-
-    try 
-    {
-        $vmResource = Get-AzureRmResource -ResourceName $script:VmName -ResourceType Microsoft.Compute/virtualMachines -ResourceGroupName $script:ResourceGroupName
-        $script:VmSize = $vmResource.Properties.hardwareProfile.vmSize
-    }
-    catch {}
-
-    try 
-    {
-        $rdxResource = Get-AzureRmResource -ResourceName $script:RdxName -ResourceType Microsoft.TimeseriesInsights/environments -ResourceGroupName $script:ResourceGroupName
-        $script:RdxEnvironmentSkuName = $rdxResource.Sku.name
-    }
-    catch {}
-}
-
-# Setup AAD for webservice
-UpdateResourceGroupState ProvisionAAD
-UpdateAadApp $script:AadTenant
-$script:AadClientId = GetEnvSetting "AadClientId"
-UpdateEnvSetting "AadInstance" ($script:AzureEnvironment.ActiveDirectoryAuthority + "{0}")
-
-# Build the solution
-Build
-
-# Package and upload solution WebPackages
-Package
-FinalizeWebPackages
-
-# Build the simulation
-SimulationBuild
-
-# Build simulation scripts
-SimulationBuildScripts
-
-# Compressed simulation binaries
-Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Build compressed archive"
-Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
-Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
-Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
-Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
-
-# Copy the factory simulation template, the factory simulation binaries and the VM init script into the WebDeploy container.
-Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Upload all required files into the storage account.")
-$script:VmArmTemplateUri = UploadFileToContainerBlob $script:VmDeploymentTemplateFile $script:StorageAccount.StorageAccountName "WebDeploy" $true
-$script:SimulationUri = UploadFileToContainerBlob "$script:SimulationPath/simulation" $script:StorageAccount.StorageAccountName "WebDeploy" $true
-$script:InitSimulationUri = UploadFileToContainerBlob $script:SimulationBuildOutputInitScript $script:StorageAccount.StorageAccountName "WebDeploy" $true
-$script:WebAppUri = UploadFileToContainerBlob $script:WebAppLocalPath $script:StorageAccount.StorageAccountName "WebDeploy" -secure $true
-
-# Ensure that our build output is picked up by the ARM deployment.
-$script:ArmParameter += @{ `
-    webAppUri = $script:WebAppUri; `
-    vmArmTemplateUri = $script:VmArmTemplateUri; `
-    simulationUri = $script:SimulationUri; `
-    initSimulationUri = $script:InitSimulationUri; `
-}
-
-$script:X509Collection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
-$script:X509Collection.Import("$script:CreateCertsPath/private/$script:DeploymentName/$script:UaSecretBaseName.pfx", $script:UaSecretPassword, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
-$script:UaSecretThumbprint = $script:X509Collection.ThumbPrint
-Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - X509 certificate for OPC UA communication has thumbprint: $script:UaSecretThumbprint"
-$script:UaSecretForWebsiteEncoded = [System.Convert]::ToBase64String($script:X509Collection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12))
-$script:UaSecretForVmEncoded = [System.Convert]::ToBase64String($script:X509Collection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert, $script:UaSecretPassword))
-$script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd"
-if ($script:WebSitesServicePrincipal -eq $null)
-{
-    Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Microsoft.Web serivce principal unknown. Registering Microsoft.Web for the subscription."
-    Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Web
-    $script:maxTries = $MAX_TRIES;
-    while ($script:WebSitesServicePrincipal -eq $null)
-    {
-        sleep $SECONDS_TO_SLEEP
-        $script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd"
-        if ($script:maxTries-- -le 0)
-        {
-            Write-Error ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Timed out while waiting for creation of the ServicePrincipal for resource provider for Microsoft.Web.")
-            throw ("Timed out while waiting for creation of the ServicePrincipal for resource provider for Microsoft.Web.")
-        }
-    }
-}
-$script:WebSitesServicePrincipalObjectId = $script:WebSitesServicePrincipal.Id
-Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Websites Service Principal Object Id: $script:WebSitesServicePrincipalObjectId"
-$script:RdxAccessPolicyPrincipalObjectId = (Get-AzureRmADServicePrincipal -ServicePrincipalName $script:AadClientId).Id
-Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - AAD Client Service Principal Object Id: $script:RdxAccessPolicyPrincipalObjectId"
-$script:RdxOwnerServicePrincipalObjectId = GetOwnerObjectId
-Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Data Access Contributor Object Id: $script:RdxOwnerServicePrincipalObjectId"
-$script:RdxAuthenticationClientSecret = CreateAadClientSecret
-
-# Set up ARM parameters.
-$script:ArmParameter += @{ `
-    suitename = $script:SuiteName; `
-    suiteType = $script:SuiteType; `
-    storageName = $script:StorageAccount.StorageAccountName; `
-    storageSkuName = $script:StorageSkuName; `
-    storageKind = $script:StorageKind; `
-    storageEndpointSuffix = $script:AzureEnvironment.StorageEndpointSuffix; `
-    aadTenant = $script:AadTenant; `
-    aadInstance = $($script:AzureEnvironment.ActiveDirectoryAuthority + "{0}"); `
-    aadClientId = $script:AadClientId; `
-    webPlanSkuName = $script:WebPlanSkuName; `
-    webPlanWorkerSize = $script:WebPlanWorkerSize; `
-    webPlanWorkerCount = $script:WebPlanWorkerCount; `
-    webPlanAlwaysOn = $script:WebPlanAlwaysOn; `
-    iotHubName = $script:IoTHubName; `
-    iotHubSkuName = $script:IoTHubSkuName; `
-    iotHubSkuCapacityUnits = $script:IoTHubSkuCapacityUnits; `
-    rdxDnsName = $script:RdxSuffix; `
-    rdxEnvironmentName = $script:RdxEnvironmentName; `
-    rdxEnvironmentSkuName = $script:RdxEnvironmentSkuName; `
-    rdxAuthenticationClientSecret = $script:RdxAuthenticationClientSecret; `
-    rdxAccessPolicyPrincipalObjectId = $script:RdxAccessPolicyPrincipalObjectId; `
-    rdxOwnerServicePrincipalObjectId = $script:RdxOwnerServicePrincipalObjectId; `
-    vmSize = $script:VmSize; `
-    adminUsername = $script:VmAdminUsername; `
-    adminPassword = $script:VmAdminPassword; `
-    keyVaultSkuName = $script:KeyVaultSkuName; `
-    keyVaultSecretBaseName = $script:UaSecretBaseName; `
-    keyVaultVmSecret = $script:UaSecretForVmEncoded; `
-    keyVaultWebsiteSecret = $script:UaSecretForWebsiteEncoded; `
-    uaSecretThumbprint = $script:UaSecretThumbprint; `
-    uaSecretPassword =  $script:UaSecretPassword; `
-    webSitesServicePrincipalObjectId = $script:WebSitesServicePrincipalObjectId; `
-}
-
-# Check if there is a bing maps license key set in the configuration file.
-$script:MapApiQueryKey = GetEnvSetting "MapApiQueryKey"
-if ([string]::IsNullOrEmpty($script:MapApiQueryKey))
-{
-    # To enable bing maps functionality, the PowerShell environement variable MapApiQueryKey must hold bing maps license key
-    if (-not [string]::IsNullOrEmpty($env:MapApiQueryKey))
-    {
-        $script:MapApiQueryKey = $env:MapApiQueryKey
-    }
-}
-# the bing maps is only set in the ARM template if there is a valid license key and if it is deployed in public cloud environments.
-if (-not [string]::IsNullOrEmpty($script:MapApiQueryKey) -and $script:AzureEnvironmentName -eq "AzureCloud")
-{
-    # Pass the key to the ARM template.
-    $script:ArmParameter += @{mapApiQueryKey=$script:MapApiQueryKey;}
-}
-
-# Show deployment parameters.
-Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Suite name: $script:SuiteName"
-Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Storage Name: $($script:StorageAccount.StorageAccountName)"
-Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - IotHub Name: $script:IoTHubName"
-Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Rdx Name: $script:RdxEnvironmentName"
-Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - AAD Tenant: $($script:AadTenant)"
-Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - AAD ClientId: $($script:AadClientId)"
-Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - ResourceGroup Name: $script:ResourceGroupName"
-Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Deployment template file: $script:DeploymentTemplateFile"
-
-Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Provisioning resources, if this is the first time, this operation can take up 10 minutes..."
-Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - ARM parameters:")
-foreach ($script:ArmParameterKey in $script:ArmParameter.Keys) 
-{
-    Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - ARM Parameter '$($script:ArmParameterKey)' for deployment has value '$($script:ArmParameter[$script:ArmParameterKey])'")
-}
-
-# Deploy resources to Azure
-Write-Verbose ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Deploy all other resources to Azure")
-UpdateResourceGroupState ProvisionAzure
-$script:ArmResult = New-AzureRmResourceGroupDeployment -ResourceGroupName $script:ResourceGroupName -TemplateFile $script:DeploymentTemplateFile -TemplateParameterObject $script:ArmParameter -Verbose
-if ($script:ArmResult.ProvisioningState -ne "Succeeded")
-{
-    Write-Error "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Resource deployment failed"
-    UpdateResourceGroupState Failed
-    throw "Provisioning failed"
-}
-else
-{
-    # For a debug confguration, we enable error logging of the WebApp
-    if ($script:Configuration -eq "debug" -and $script:CloudDeploy -eq $true)
-    {
-        [System.Boolean]$enable = $true;
-        Set-AzureRmWebApp -ResourceGroupName $script:ResourceGroupName -Name $script:SuiteName -DetailedErrorLoggingEnabled $enable | Out-Null
-    }
-}
-
-# Set Config file variables
-Write-Verbose  "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Updating config file settings"
-UpdateEnvSetting "ServiceStoreAccountName" $script:StorageAccount.StorageAccountName
-UpdateEnvSetting "SolutionStorageAccountConnectionString" $script:ArmResult.Outputs['storageConnectionString'].Value
-UpdateEnvSetting "IotHubOwnerConnectionString" $script:ArmResult.Outputs['iotHubOwnerConnectionString'].Value
-UpdateEnvSetting "RdxAuthenticationClientSecret" $script:RdxAuthenticationClientSecret
-UpdateEnvSetting "RdxDnsName" $script:ArmResult.Outputs['rdxDnsName'].Value
-UpdateEnvSetting "RdxEnvironmentId" $script:ArmResult.Outputs['rdxEnvironmentId'].Value
-if ($script:ArmResult.Outputs['mapApiQueryKey'].Value.Length -gt 0 -and $script:ArmResult.Outputs['mapApiQueryKey'].Value -ne "0")
-{
-    UpdateEnvSetting "MapApiQueryKey" $script:ArmResult.Outputs['mapApiQueryKey'].Value
-}
-
-UpdateResourceGroupState Complete
-Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Provisioning and deployment completed successfully, see {0}.config.user for deployment values" -f $script:DeploymentName)
-
-# For cloud deployments start the website
-if ($script:CloudDeploy -eq $true)
-{
-    $script:MaxTries = $MAX_TRIES
-    $script:WebEndpoint = "{0}.{1}" -f $script:DeploymentName, $script:WebsiteSuffix
-    if (!(Test-AzureName -Website $script:WebEndpoint))
-    {
-        Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Waiting for website URL to resolve."
-        while (!(Test-AzureName -Website $script:WebEndpoint))
-        {
-            Clear-DnsClientCache
-            Write-Progress -Activity "Resolving website URL" -Status "Trying" -SecondsRemaining ($script:MaxTries*$SECONDS_TO_SLEEP)
-            if ($script:MaxTries-- -le 0)
-            {
-                Write-Warning ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Unable to resolve Website endpoint {0}" -f $script:WebAppHomepage)
-                break
-            }
-            sleep $SECONDS_TO_SLEEP
-        }
-    }
-    if (Test-AzureName -Website $script:WebEndpoint)
-    {
-        # Wait till we can successfully load the page
-        Write-Output "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Waiting for website to respond."
-        while ($true)
-        {
-            try
-            {
-                $result = Invoke-WebRequest -Uri $script:WebAppHomepage
-            }
-            catch 
-            {
-                $result = $null
-            }
-            if ($result -ne $null -and $result.StatusCode -eq 200)
-            {
-                break;
-            }
-            Write-Verbose "$(Get-Date â€“f $TIME_STAMP_FORMAT) - Sleep for 5 seconds and check again."
-            Start-Sleep -Seconds 10
-        }
-        # start the browser to show the page
-        start $script:WebAppHomepage
-    }
-}
-else
-{
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - For local deployment, open the Connectedfactory.sln and run the Web project from Visual Studio.")
-    Write-Output ("$(Get-Date â€“f $TIME_STAMP_FORMAT) - Then you can access the dashboard at '{0}'" -f $script:WebAppHomepage)
-}

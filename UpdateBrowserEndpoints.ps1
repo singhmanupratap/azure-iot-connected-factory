@@ -39,8 +39,8 @@ Function FixWebAppPackage()
     )
 
     # Set path correct
-    $browserEndpointsName = "OPC.Ua.Browser.Endpoints.xml"
-    $browserEndpointsFullName = "$script:IoTSuiteRootPath/WebApp/$browserEndpointsName"
+    #$browserEndpointsName = "OPC.Ua.Browser.Endpoints.xml"
+    #$browserEndpointsFullName = "$script:IoTSuiteRootPath/WebApp/$browserEndpointsName"
     #$zipfile = Get-Item "$filePath"
     #[System.IO.Compression.ZipArchive]$zipArchive = [System.IO.Compression.ZipFile]::Open($zipfile.FullName, "Update")
 
