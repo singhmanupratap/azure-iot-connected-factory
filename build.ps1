@@ -2015,7 +2015,8 @@ $EXPECTED_PSCX_MODULE_VERSION = "3.2.2"
 $EXPECTED_POSHSSH_MODULE_VERSION = "1.7.7"
 
 # Variable initialization
-$script:IoTSuiteRootPath = $BuildRepositoryLocalPath #Split-Path $MyInvocation.MyCommand.Path
+$script:IoTSuiteRootPath = Split-Path $MyInvocation.MyCommand.Path
+$script:IoTSuiteRootPath = $BuildRepositoryLocalPath
 $script:SimulationPath = "$script:IoTSuiteRootPath/Simulation"
 $script:CreateCertsPath = "$script:SimulationPath/Factory/CreateCerts"
 $script:WebAppPath = "$script:IoTSuiteRootPath/WebApp"
@@ -2034,8 +2035,8 @@ $script:SimulationConfigPath = "$script:SimulationBuildOutputPath/Config"
 
 # Import and check installed Azure cmdlet version
 $script:AzurePowershellVersionMajor = (Get-Module -ListAvailable -Name Azure).Version.Major
-CheckModuleVersion PSCX $EXPECTED_PSCX_MODULE_VERSION
-CheckModuleVersion Posh-SSH $EXPECTED_POSHSSH_MODULE_VERSION
+#CheckModuleVersion PSCX $EXPECTED_PSCX_MODULE_VERSION
+#CheckModuleVersion Posh-SSH $EXPECTED_POSHSSH_MODULE_VERSION
 
 # Validate command line semantic
 if ($script:Command -eq "cloud" -or $script:Command -eq "delete" -and $script:DeploymentName -eq "local")
