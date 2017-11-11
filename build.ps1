@@ -2034,6 +2034,9 @@ $script:SimulationConfigPath = "$script:SimulationBuildOutputPath/Config"
 
 # Import and check installed Azure cmdlet version
 $script:AzurePowershellVersionMajor = (Get-Module -ListAvailable -Name Azure).Version.Major
+Install-PackageProvider -Name NuGet -Force -Scope CurrentUser
+Install-Module -Name PSCX -Force -Verbose -Scope CurrentUser
+Install-Module -Name Posh-SSH -Force -Verbose -Scope CurrentUser
 CheckModuleVersion PSCX $EXPECTED_PSCX_MODULE_VERSION
 CheckModuleVersion Posh-SSH $EXPECTED_POSHSSH_MODULE_VERSION
 
