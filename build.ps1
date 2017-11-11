@@ -623,7 +623,11 @@ Function GetAzureAccountInfo()
         if ($accounts -eq $null)
         {
             Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Add new Azure account"
-            $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
+			$accountName ="aditya@manuapratapsinghaccenture.onmicrosoft.com"
+			$password = ConvertTo-SecureString "man5480U#" -AsPlainText -Force
+			$credential = New-Object System.Management.Automation.PSCredential($accountName, $password)
+
+            $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential $credential
         }
         else 
         {
