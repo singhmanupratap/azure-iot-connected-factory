@@ -616,7 +616,8 @@ Function AddAzureAccount()
 {
 	
 	#$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -SubscriptionDataFile $script:SubscriptionDataFile
-	$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential GetAzureAccountCredential
+	$credential = GetAzureAccountCredential
+	$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential $credential
 	return $account
 }
 #
@@ -721,7 +722,8 @@ Function ValidateLoginCredentials()
     if ($rmProfileLoaded -ne $true) {
         Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Logging in to your AzureRM account"
         try {
-            Login-AzureRmAccount -EnvironmentName $script:AzureEnvironment.Name -Credential GetAzureAccountCredential -ErrorAction Stop | Out-Null
+			$credential = GetAzureAccountCredential
+            Login-AzureRmAccount -EnvironmentName $script:AzureEnvironment.Name -Credential $credential -ErrorAction Stop | Out-Null
         }
         catch
         {
