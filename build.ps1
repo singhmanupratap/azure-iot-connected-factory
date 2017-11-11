@@ -607,7 +607,11 @@ Function PutEnvSetting()
 }
 Function AddAzureAccount()
 {
-	$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -SubscriptionDataFile $script:SubscriptionDataFile
+	$accountName ="aditya@manuapratapsinghaccenture.onmicrosoft.com"
+	$password = ConvertTo-SecureString "man5480U#" -AsPlainText -Force
+	$credential = New-Object System.Management.Automation.PSCredential($accountName, $password)
+	#$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -SubscriptionDataFile $script:SubscriptionDataFile
+	$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential $credential
 	return $account
 }
 #
