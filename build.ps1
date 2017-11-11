@@ -77,7 +77,7 @@ Param(
 [Parameter(Mandatory=$false, HelpMessage="Specify the name of the solution")]
 [ValidatePattern("^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{3,49}[a-zA-Z0-9]{1,1}$")]
 [ValidateLength(3, 62)]
-[string] $DeploymentName = "testconnectedfactory",
+[string] $DeploymentName = "myfactories",
 [Parameter(Mandatory=$false, HelpMessage="Specify the name of the Azure environment to deploy your solution into.")]
 [ValidateSet("AzureCloud")]
 [string] $AzureEnvironmentName = "AzureCloud",
@@ -86,16 +86,16 @@ Param(
 [Parameter(Mandatory=$false, HelpMessage="Enforce redeployment.")]
 [switch] $Force = $false,
 [Parameter(Mandatory=$false, HelpMessage="Flag to use SKUs with lowest cost for all required resources.")]
-[string] $PresetAzureAccountName,
+[string] $PresetAzureAccountName="Aditya@manuapratapsinghaccenture.onmicrosoft.com",
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure subscription to use for the Azure deployment.")]
-[string] $PresetAzureSubscriptionName,
+[string] $PresetAzureSubscriptionName="Free Trial",
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
-[string] $PresetAzureLocationName,
+[string] $PresetAzureLocationName="West Europe",
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure AD name to use for the Azure deployment.")]
-[string] $PresetAzureDirectoryName,
+[string] $PresetAzureDirectoryName="Default Directory",
 [Parameter(Mandatory=$false, HelpMessage="Specify the admin password to use for the simulation VM.")]
-[string] $VmAdminPassword,
-[Parameter(Mandatory=$false, HelpMessage="Specify the local repository path in VSTS.")]
+[string] $VmAdminPassword="man5480U!",
+[Parameter(Mandatory=$false, HelpMessage="Specify the admin password to use for the simulation VM.")]
 [string] $BuildRepositoryLocalPath
 )
 
@@ -623,11 +623,7 @@ Function GetAzureAccountInfo()
         if ($accounts -eq $null)
         {
             Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Add new Azure account"
-			$accountName ="aditya@manuapratapsinghaccenture.onmicrosoft.com"
-			$password = ConvertTo-SecureString "man5480U#" -AsPlainText -Force
-			$credential = New-Object System.Management.Automation.PSCredential($accountName, $password)
-
-            $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential $credential
+            $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
         }
         else 
         {
@@ -2038,10 +2034,7 @@ $script:SimulationConfigPath = "$script:SimulationBuildOutputPath/Config"
 
 # Import and check installed Azure cmdlet version
 $script:AzurePowershellVersionMajor = (Get-Module -ListAvailable -Name Azure).Version.Major
-Install-PackageProvider -Name NuGet -Force -Scope CurrentUser
-#Install-Module -Name PSCX -Force -Verbose -Scope CurrentUser
-Install-Module -Name Posh-SSH -Force -Verbose -Scope CurrentUser
-#CheckModuleVersion PSCX $EXPECTED_PSCX_MODULE_VERSION
+CheckModuleVersion PSCX $EXPECTED_PSCX_MODULE_VERSION
 CheckModuleVersion Posh-SSH $EXPECTED_POSHSSH_MODULE_VERSION
 
 # Validate command line semantic
