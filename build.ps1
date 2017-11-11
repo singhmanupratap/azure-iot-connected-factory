@@ -2052,8 +2052,8 @@ $EXPECTED_PSCX_MODULE_VERSION = "3.2.2"
 $EXPECTED_POSHSSH_MODULE_VERSION = "1.7.7"
 
 # Variable initialization
-$script:IoTSuiteRootPath = Split-Path $MyInvocation.MyCommand.Path
-#$script:IoTSuiteRootPath = $BuildRepositoryLocalPath
+#$script:IoTSuiteRootPath = Split-Path $MyInvocation.MyCommand.Path
+$script:IoTSuiteRootPath = $BuildRepositoryLocalPath
 $script:SimulationPath = "$script:IoTSuiteRootPath/Simulation"
 $script:CreateCertsPath = "$script:SimulationPath/Factory/CreateCerts"
 $script:WebAppPath = "$script:IoTSuiteRootPath/WebApp"
