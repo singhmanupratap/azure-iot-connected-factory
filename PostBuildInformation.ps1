@@ -1,4 +1,4 @@
-$buildId=$(Build.BuildId)
+$buildId=$Env:BuildId
 $VmArmTemplateUri=$env:vmDeploymentTemplateFile+"/"+"$buildId"+"/"+"FactorySimulation.json"+$env:sasToken
 $SimulationUri=$env:simulationUri+"/"+"$buildId"+"/"+"FactorySimulation.json"+$env:sasSimulationUriToken
 $InitSimulationUri=$env:initSimulationUri+"/"+"$buildId"+"/"+"FactorySimulation.json"+$env:sasInitSimulationUriToken
