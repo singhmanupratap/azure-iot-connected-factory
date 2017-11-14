@@ -81,9 +81,9 @@ Param(
 [ValidateSet("AzureCloud")]
 [string] $AzureEnvironmentName = $Env:AzureEnvironmentName,# "AzureCloud"
 [Parameter(Mandatory=$false, HelpMessage="Specify a username to use for the Azure deployment.")]
-[switch] $LowCost = $Env:LowCost, #$false
+[switch] $LowCost = $false,
 [Parameter(Mandatory=$false, HelpMessage="Enforce redeployment.")]
-[switch] $Force = $Env:Force, #$true
+[switch] $Force = $true,
 [Parameter(Mandatory=$false, HelpMessage="Flag to use SKUs with lowest cost for all required resources.")]
 [string] $PresetAzureAccountName=$Env:PresetAzureAccountName,#"Aditya@manuapratapsinghaccenture.onmicrosoft.com"
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure subscription to use for the Azure deployment.")]
