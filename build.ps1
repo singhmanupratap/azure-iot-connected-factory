@@ -67,7 +67,7 @@
 #>
 [CmdletBinding()]
 Param(
-[Parameter(Position=0, Mandatory=$false, HelpMessage="Specify the command to execute.")]
+[Parameter(Mandatory=$false, HelpMessage="Specify the command to execute.")]
 [ValidateSet("build", "updatesimulation", "local", "cloud", "clean", "delete")]
 [string] $Command = $Env:Command ,#"cloud"
 [Parameter(Mandatory=$false, HelpMessage="Specify the configuration to build.")]
@@ -81,9 +81,9 @@ Param(
 [ValidateSet("AzureCloud")]
 [string] $AzureEnvironmentName = $Env:AzureEnvironmentName,# "AzureCloud"
 [Parameter(Mandatory=$false, HelpMessage="Specify a username to use for the Azure deployment.")]
-[switch] $LowCost = $false,
+[string] $IsLowCost = "0",
 [Parameter(Mandatory=$false, HelpMessage="Enforce redeployment.")]
-[switch] $Force = $true,
+[string] $IsForce = "1",
 [Parameter(Mandatory=$false, HelpMessage="Flag to use SKUs with lowest cost for all required resources.")]
 [string] $PresetAzureAccountName=$Env:PresetAzureAccountName,#"Aditya@manuapratapsinghaccenture.onmicrosoft.com"
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure subscription to use for the Azure deployment.")]
@@ -2051,9 +2051,15 @@ function SimulationUpdate
 # Start of script
 #
 ################################################################################################################################################################
-
+$LowCost = $false
+$Force = $true
+if($IsLowCost -eq "1" -or $IsLowCost.ToLowerInvariant() -eq "true"){
+	$LowCost = $true
+}
+if($IsForce -eq "0" -or $IsForce.ToLowerInvariant() -eq "false"){
+	$Force = $false
+}
 $VerbosePreference = "Continue"
-
 # Constant definitions
 $MAX_TRIES = 20
 $SECONDS_TO_SLEEP=3
