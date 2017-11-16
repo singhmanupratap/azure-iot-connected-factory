@@ -2109,6 +2109,7 @@ if ($($script:Command -eq "local") -and ($script:DeploymentName -ne "local"))
 InstallNuget
 
 # Set deployment name
+Write-Output "DeploymentName exists ######$script:DeploymentName#######"
 $script:DeploymentName = $script:DeploymentName.ToLowerInvariant()
 Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Name of the deployment is '{0}'" -f $script:DeploymentName)
 
