@@ -2228,10 +2228,14 @@ if ($script:Command -eq "build" -or $script:Command -eq "updatesimulation")
 
     # Compressed simulation binaries
     Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Build compressed archive"
-    Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
-    Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
-    Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
-    Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
+    #Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
+    #Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
+    #Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
+    #Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
+
+	Compress-Archive -Path "$script:SimulationBuildOutputPath" -CompressionLevel Fastest -DestinationPath "$script:SimulationPath/buildOutput.zip"
+	Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
+	Move-Item "$script:SimulationPath/buildOutput.zip" "$script:SimulationPath/simulation" | Out-Null
 
     # We are done in case of a build command
     if ($script:Command -eq "build")
@@ -2454,11 +2458,17 @@ SimulationBuild
 SimulationBuildScripts
 
 # Compressed simulation binaries
+
 Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Build compressed archive"
-Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
-Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
+
+#Write-Tar "$script:SimulationBuildOutputPath" -OutputPath "$script:SimulationPath/buildOutput.tar" -Quiet 4> $null | Out-Null
+#Write-BZip2 -LiteralPath "$script:SimulationPath/buildOutput.tar" -OutputPath "$script:SimulationPath" -Quiet 4> $null | Out-Null
+#Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
+#Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
+
+Compress-Archive -Path "$script:SimulationBuildOutputPath" -CompressionLevel Fastest -DestinationPath "$script:SimulationPath/buildOutput.zip"
 Remove-Item "$script:SimulationPath/simulation" -ErrorAction SilentlyContinue | Out-Null
-Move-Item "$script:SimulationPath/buildOutput.tar.bz2" "$script:SimulationPath/simulation" | Out-Null
+Move-Item "$script:SimulationPath/buildOutput.zip" "$script:SimulationPath/simulation" | Out-Null
 
 # Copy the factory simulation template, the factory simulation binaries and the VM init script into the WebDeploy container.
 Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Upload all required files into the storage account.")
