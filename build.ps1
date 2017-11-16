@@ -2051,6 +2051,20 @@ function SimulationUpdate
 # Start of script
 #
 ################################################################################################################################################################
+Write-Output "Command  ######$script:Command#######"
+Write-Output "Configuration ######$script:Configuration#######"
+Write-Output "DeploymentName ######$script:DeploymentName#######"
+Write-Output "AzureEnvironmentName ######$script:AzureEnvironmentName#######"
+Write-Output "IsLowCost ######$script:IsLowCost#######"
+Write-Output "IsForce ######$script:IsForce#######"
+Write-Output "PresetAzureAccountName ######$script:PresetAzureAccountName#######"
+Write-Output "PresetAzureSubscriptionName ######$script:PresetAzureSubscriptionName#######"
+Write-Output "PresetAzureLocationName ######$script:PresetAzureLocationName#######"
+Write-Output "PresetAzureDirectoryName ######$script:PresetAzureDirectoryName#######"
+Write-Output "VmAdminPassword ######$script:VmAdminPassword#######"
+Write-Output "BuildRepositoryLocalPath ######$script:BuildRepositoryLocalPath#######"
+Write-Output "PresetAzureAccountPassword ######$script:PresetAzureAccountPassword#######"
+
 $LowCost = $false
 $Force = $true
 if($IsLowCost -eq "1" -or $IsLowCost.ToLowerInvariant() -eq "true"){
@@ -2109,7 +2123,7 @@ if ($($script:Command -eq "local") -and ($script:DeploymentName -ne "local"))
 InstallNuget
 
 # Set deployment name
-Write-Output "DeploymentName exists ######$script:DeploymentName#######"
+
 $script:DeploymentName = $script:DeploymentName.ToLowerInvariant()
 Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Name of the deployment is '{0}'" -f $script:DeploymentName)
 
