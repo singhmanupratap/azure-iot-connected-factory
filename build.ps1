@@ -97,7 +97,9 @@ Param(
 [Parameter(Mandatory=$false, HelpMessage="Specify the admin password to use for the simulation VM.")]
 [string] $BuildRepositoryLocalPath=$Env:BuildRepositoryLocalPath,
 [Parameter(Mandatory=$false, HelpMessage="Specify the admin password to use for the simulation VM.")]
-[string] $PresetAzureAccountPassword=$Env:PresetAzureAccountPassword #"man5480U#"
+[string] $PresetAzureAccountPassword=$Env:PresetAzureAccountPassword, #"man5480U#"
+[Parameter(Mandatory=$false, HelpMessage="Specify the admin password to use for the simulation VM.")]
+[string] $AzureTenantId
 )
 
 Function CheckCommandAvailability()
@@ -615,11 +617,15 @@ Function GetAzureAccountCredential()
 }
 Function AddAzureAccount()
 {
+	$accountName = $PresetAzureAccountName
+	$password = ConvertTo-SecureString $PresetAzureAccountPassword -AsPlainText -Force
+	$credential = New-Object System.Management.Automation.PSCredential($accountName, $password)
+	$account = Add-AzureRmAccount -Environment $script:AzureEnvironment.Name -Credential $credential -ServicePrincipal -TenantId $script:AzureTenantId -SubscriptionName $script:PresetAzureSubscriptionName
 	
 	#$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -SubscriptionDataFile $script:SubscriptionDataFile
-	$credential = GetAzureAccountCredential
-	$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential $credential
-	return $account
+	#$credential = GetAzureAccountCredential
+	#$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential $credential
+	return $account.Context.Account
 }
 #
 # Called in case no account is configured to let user chose the account.
@@ -2045,6 +2051,45 @@ function SimulationUpdate
     }
 }
 
+Function UploadConfigFileToBlob()
+{
+    Param(
+		[Parameter(Mandatory=$true,Position=0)] [string] $subscriptionId,
+		[Parameter(Mandatory=$true,Position=0)] [string] $username,
+		[Parameter(Mandatory=$true,Position=0)] [string] $password,
+		[Parameter(Mandatory=$true,Position=0)] [string] $loaction,
+		[Parameter(Mandatory=$true,Position=0)] [string] $resourceGroup,
+        [Parameter(Mandatory=$true,Position=0)] [string] $filePath,
+        [Parameter(Mandatory=$true,Position=1)] [string] $storageAccountName,
+        [Parameter(Mandatory=$true,Position=2)] [string] $containerName
+    )
+	$password = ConvertTo-SecureString $password -AsPlainText -Force
+	$credential = New-Object System.Management.Automation.PSCredential($username, $password)
+	Login-AzureRmAccount - -EnvironmentName "AzureCloud" -Credential $credential -SubscriptionId $subscriptionId -ErrorAction Stop | Out-Null
+	$storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $resourceGroup `
+	-Name $storageAccountName `
+	-Location $location `
+	-SkuName Standard_LRS `
+	-Kind Storage `
+	-EnableEncryptionService Blob
+
+	if($storageAccount -eq $null){
+		$storageAccount = New-AzureRmStorageAccount -ResourceGroupName $resourceGroup `
+		-Name $storageAccountName `
+		-Location $location `
+		-SkuName Standard_LRS `
+		-Kind Storage `
+		-EnableEncryptionService Blob
+		$storageAccountKey = (Get-AzureRmStorageAccountKey -StorageAccountName $storageAccountName -ResourceGroupName $script:ResourceGroupName).Value[0]
+		$context = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
+		New-AzureStorageContainer $containerName -Permission Off -Context $context -ErrorAction SilentlyContinue | Out-Null
+	}
+	else{
+		$context = $storageAccount.Context
+	}
+    # Upload the file
+    Set-AzureStorageBlobContent -Blob $fileName -Container $containerName -File $file.FullName -Context $context -Force | Out-Null
+}
 
 ################################################################################################################################################################
 #
@@ -2123,7 +2168,6 @@ if ($($script:Command -eq "local") -and ($script:DeploymentName -ne "local"))
 InstallNuget
 
 # Set deployment name
-
 $script:DeploymentName = $script:DeploymentName.ToLowerInvariant()
 Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Name of the deployment is '{0}'" -f $script:DeploymentName)
 
@@ -2189,6 +2233,11 @@ $script:UaSecretBaseName = "UAWebClient"
 $script:UaSecretPassword = "password"
 
 $script:SubscriptionDataFile = "{0}/{1}-{2}-credentials.publishsettings" -f $script:IoTSuiteRootPath, $script:PresetAzureAccountName, $script:PresetAzureSubscriptionName
+
+
+$script:TemplateParameteLocalFile = "$script:IoTSuiteRootPath\ArmParameter.json"
+
+$script:TemplateParameterUri = ""
 
 Write-Output "Subscription Data File ######$script:SubscriptionDataFile"
 
@@ -2516,7 +2565,7 @@ $script:RdxOwnerServicePrincipalObjectId = GetOwnerObjectId
 Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Data Access Contributor Object Id: $script:RdxOwnerServicePrincipalObjectId"
 $script:RdxAuthenticationClientSecret = CreateAadClientSecret
 
-# Set up ARM parameters.
+
 $script:ArmParameter += @{ `
     suitename = $script:SuiteName; `
     suiteType = $script:SuiteType; `
@@ -2526,7 +2575,6 @@ $script:ArmParameter += @{ `
     storageEndpointSuffix = $script:AzureEnvironment.StorageEndpointSuffix; `
     aadTenant = $script:AadTenant; `
     aadInstance = $($script:AzureEnvironment.ActiveDirectoryAuthority + "{0}"); `
-    aadClientId = $script:AadClientId; `
     webPlanSkuName = $script:WebPlanSkuName; `
     webPlanWorkerSize = $script:WebPlanWorkerSize; `
     webPlanWorkerCount = $script:WebPlanWorkerCount; `
@@ -2551,7 +2599,6 @@ $script:ArmParameter += @{ `
     uaSecretPassword =  $script:UaSecretPassword; `
     webSitesServicePrincipalObjectId = $script:WebSitesServicePrincipalObjectId; `
 }
-
 # Check if there is a bing maps license key set in the configuration file.
 $script:MapApiQueryKey = GetEnvSetting "MapApiQueryKey"
 if ([string]::IsNullOrEmpty($script:MapApiQueryKey))
@@ -2586,89 +2633,19 @@ foreach ($script:ArmParameterKey in $script:ArmParameter.Keys)
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - ARM Parameter '$($script:ArmParameterKey)' for deployment has value '$($script:ArmParameter[$script:ArmParameterKey])'")
 }
 
-# Deploy resources to Azure
-Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Deploy all other resources to Azure")
-UpdateResourceGroupState ProvisionAzure
-$script:ArmResult = New-AzureRmResourceGroupDeployment -ResourceGroupName $script:ResourceGroupName -TemplateFile $script:DeploymentTemplateFile -TemplateParameterObject $script:ArmParameter -Verbose
-if ($script:ArmResult.ProvisioningState -ne "Succeeded")
-{
-    Write-Error "$(Get-Date –f $TIME_STAMP_FORMAT) - Resource deployment failed"
-    UpdateResourceGroupState Failed
-    throw "Provisioning failed"
-}
-else
-{
-    # For a debug confguration, we enable error logging of the WebApp
-    if ($script:Configuration -eq "debug" -and $script:CloudDeploy -eq $true)
-    {
-        [System.Boolean]$enable = $true;
-        Set-AzureRmWebApp -ResourceGroupName $script:ResourceGroupName -Name $script:SuiteName -DetailedErrorLoggingEnabled $enable | Out-Null
-    }
-}
-
 # Set Config file variables
 Write-Verbose  "$(Get-Date –f $TIME_STAMP_FORMAT) - Updating config file settings"
 UpdateEnvSetting "ServiceStoreAccountName" $script:StorageAccount.StorageAccountName
-UpdateEnvSetting "SolutionStorageAccountConnectionString" $script:ArmResult.Outputs['storageConnectionString'].Value
-UpdateEnvSetting "IotHubOwnerConnectionString" $script:ArmResult.Outputs['iotHubOwnerConnectionString'].Value
+#UpdateEnvSetting "SolutionStorageAccountConnectionString" $script:ArmResult.Outputs['storageConnectionString'].Value
+#UpdateEnvSetting "IotHubOwnerConnectionString" $script:ArmResult.Outputs['iotHubOwnerConnectionString'].Value
 UpdateEnvSetting "RdxAuthenticationClientSecret" $script:RdxAuthenticationClientSecret
-UpdateEnvSetting "RdxDnsName" $script:ArmResult.Outputs['rdxDnsName'].Value
-UpdateEnvSetting "RdxEnvironmentId" $script:ArmResult.Outputs['rdxEnvironmentId'].Value
-if ($script:ArmResult.Outputs['mapApiQueryKey'].Value.Length -gt 0 -and $script:ArmResult.Outputs['mapApiQueryKey'].Value -ne "0")
-{
-    UpdateEnvSetting "MapApiQueryKey" $script:ArmResult.Outputs['mapApiQueryKey'].Value
-}
+#UpdateEnvSetting "RdxDnsName" $script:ArmResult.Outputs['rdxDnsName'].Value
+#UpdateEnvSetting "RdxEnvironmentId" $script:ArmResult.Outputs['rdxEnvironmentId'].Value
 
-UpdateResourceGroupState Complete
-Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Provisioning and deployment completed successfully, see {0}.config.user for deployment values" -f $script:DeploymentName)
+#Save parameters as JSON
+$script:ArmParameter | ConvertTo-Json -depth 100 | Out-File $script:TemplateParameteLocalFile
+$script:TemplateUri = UploadFileToContainerBlob $script:DeploymentTemplateFile $script:StorageAccount.StorageAccountName "WebDeploy" -secure $true
+$script:TemplateParameterUri = UploadFileToContainerBlob $script:TemplateParameteLocalFile $script:StorageAccount.StorageAccountName "WebDeploy" -secure $true
 
-# For cloud deployments start the website
-if ($script:CloudDeploy -eq $true)
-{
-    $script:MaxTries = $MAX_TRIES
-    $script:WebEndpoint = "{0}.{1}" -f $script:DeploymentName, $script:WebsiteSuffix
-    if (!(Test-AzureName -Website $script:WebEndpoint))
-    {
-        Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Waiting for website URL to resolve."
-        while (!(Test-AzureName -Website $script:WebEndpoint))
-        {
-            Clear-DnsClientCache
-            Write-Progress -Activity "Resolving website URL" -Status "Trying" -SecondsRemaining ($script:MaxTries*$SECONDS_TO_SLEEP)
-            if ($script:MaxTries-- -le 0)
-            {
-                Write-Warning ("$(Get-Date –f $TIME_STAMP_FORMAT) - Unable to resolve Website endpoint {0}" -f $script:WebAppHomepage)
-                break
-            }
-            sleep $SECONDS_TO_SLEEP
-        }
-    }
-    if (Test-AzureName -Website $script:WebEndpoint)
-    {
-        # Wait till we can successfully load the page
-        Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Waiting for website to respond."
-        while ($true)
-        {
-            try
-            {
-                $result = Invoke-WebRequest -Uri $script:WebAppHomepage
-            }
-            catch 
-            {
-                $result = $null
-            }
-            if ($result -ne $null -and $result.StatusCode -eq 200)
-            {
-                break;
-            }
-            Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Sleep for 5 seconds and check again."
-            Start-Sleep -Seconds 10
-        }
-        # start the browser to show the page
-        start $script:WebAppHomepage
-    }
-}
-else
-{
-    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - For local deployment, open the Connectedfactory.sln and run the Web project from Visual Studio.")
-    Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Then you can access the dashboard at '{0}'" -f $script:WebAppHomepage)
-}
+Write-Output $script:TemplateUri
+Write-Output $script:TemplateParameterUri

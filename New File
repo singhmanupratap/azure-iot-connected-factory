@@ -1,0 +1,259 @@
+Environment				: AzureCloud
+Account					: singh.manupratap@gmail.com
+TenantId				: 3a8245c0-3fee-45f8-b985-3b71f26ebe84
+SubscriptionId			: 54ecce53-5b7e-4faa-870c-ac479b0b83d7
+SubscriptionName		: Visual Studio Professional with MSDN
+CurrentStorageAccount	: 
+
+DisplayName             : SampleADApp
+ObjectId                : bc92b279-5c2e-4aa6-8ab4-a60879ce3d3d
+IdentifierUris          : {http://OnDemandDemoApp1}
+HomePage                : http://OnDemandDemoApp1
+Type                    : Application
+ApplicationId           : be4baceb-25a1-4b6b-bde8-eb7122183185
+AvailableToOtherTenants : False
+AppPermissions          : 
+ReplyUrls               : {}
+
+RoleAssignmentId		: /subscriptions/54ecce53-5b7e-4faa-870c-ac479b0b83d7/providers/Microsoft.Authorization/roleAssignments/e9a06141-af02-4339-b2b7-79987f06f15c
+Scope					: /subscriptions/54ecce53-5b7e-4faa-870c-ac479b0b83d7
+DisplayName				: SampleADApp
+SignInName				: 
+RoleDefinitionName		: Contributor
+RoleDefinitionId		: b24988ac-6180-42a0-ab88-20f7382dd24c
+ObjectId				: bc92b279-5c2e-4aa6-8ab4-a60879ce3d3d
+ObjectType				: ServicePrincipal
+
+Account					: be4baceb-25a1-4b6b-bde8-eb7122183185
+SubscriptionName		: Visual Studio Professional with MSDN
+SubscriptionId			: 54ecce53-5b7e-4faa-870c-ac479b0b83d7
+TenantId				: 3a8245c0-3fee-45f8-b985-3b71f26ebe84
+Environment				: AzureCloud
+
+Import-Module "$ArchiveFolder\build.ps1" -Command "cloud" -Configuration "release" -DeploymentName "$deployment" -AzureEnvironmentName "AzureCloud" -IsLowCost "0" -IsForce "1" -PresetAzureAccountName "Aditya@manuapratapsinghaccenture.onmicrosoft.com" -PresetAzureSubscriptionName "Free Trial" -PresetAzureLocationName "West Europe" -PresetAzureDirectoryName "Default Directory" -VmAdminPassword "man5480U!" -BuildRepositoryLocalPath "$ArchiveFolder" -PresetAzureAccountPassword "man5480U#"
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\build.ps1" -ArgumentList 'cloud','release','testfactories','AzureCloud','0','1','Aditya@manuapratapsinghaccenture.onmicrosoft.com','Visual Studio Professional with MSDN','West Europe','Default Directory','man5480U!','C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','man5480U#'
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\deployment.ps1" -ArgumentList 'cloud','release','testfactories','AzureCloud','0','1','Aditya@manuapratapsinghaccenture.onmicrosoft.com','Visual Studio Professional with MSDN','West Europe','Default Directory','man5480U!','C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','man5480U#,https://testfactories.blob.core.windows.net/webdeploy/ConnectedfactoryMapKey.json?sv=2016-05-31&sr=b&sig=sh1fWZtH7WdDU1xsjE4kv%2FoY2di0EvOdjgqkVy2mgb8%3D&st=2017-11-23T11%3A54%3A48Z&se=2017-11-24T11%3A59%3A48Z&sp=r,https://testfactories.blob.core.windows.net/webdeploy/ArmParameter.json?sv=2016-05-31&sr=b&sig=zdycT7Aoaf%2BK4ofGPx6Nw49e0%2FzL1ckB4dSHFyTVBF8%3D&st=2017-11-23T11%3A54%3A50Z&se=2017-11-24T11%3A59%3A50Z&sp=r
+
+
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\build.ps1" -ArgumentList 'cloud','release','testfactories','AzureCloud','0','1','be4baceb-25a1-4b6b-bde8-eb7122183185','Visual Studio Professional with MSDN','West Europe','Default Directory','man5480U!','C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','man5480U#',3a8245c0-3fee-45f8-b985-3b71f26ebe84
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\deployment.ps1" -ArgumentList 'cloud','release','testfactories','AzureCloud','0','1','be4baceb-25a1-4b6b-bde8-eb7122183185','Visual Studio Professional with MSDN','West Europe','Default Directory','man5480U!','C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','man5480U#,https://testfactories.blob.core.windows.net/webdeploy/ConnectedfactoryMapKey.json?sv=2016-05-31&sr=b&sig=sh1fWZtH7WdDU1xsjE4kv%2FoY2di0EvOdjgqkVy2mgb8%3D&st=2017-11-23T11%3A54%3A48Z&se=2017-11-24T11%3A59%3A48Z&sp=r,https://testfactories.blob.core.windows.net/webdeploy/ArmParameter.json?sv=2016-05-31&sr=b&sig=zdycT7Aoaf%2BK4ofGPx6Nw49e0%2FzL1ckB4dSHFyTVBF8%3D&st=2017-11-23T11%3A54%3A50Z&se=2017-11-24T11%3A59%3A50Z&sp=r,
+
+
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\build-new.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','release','myfactories'
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\UploadArtifactstoAzureBlobContainer.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','myfactories','AzureCloud','be4baceb-25a1-4b6b-bde8-eb7122183185','xXlctVCuIQwNbt1m25d9u+LS//3FgASuZCPJl19iPrs=','54ecce53-5b7e-4faa-870c-ac479b0b83d7','3a8245c0-3fee-45f8-b985-3b71f26ebe84','West Europe'
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\deployment.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','myfactories','AzureCloud','be4baceb-25a1-4b6b-bde8-eb7122183185','xXlctVCuIQwNbt1m25d9u+LS//3FgASuZCPJl19iPrs=','54ecce53-5b7e-4faa-870c-ac479b0b83d7','3a8245c0-3fee-45f8-b985-3b71f26ebe84','West Europe','https://myfactories.blob.core.windows.net/webdeploy/ConnectedfactoryMapKey.json?sv=2016-05-31&sr=b&sig=Yc1KUWi7ii1Rh49hkFB0LB3gGJqDlL33Mwl6mqgJZJ4%3D&st=2017-12-07T11%3A13%3A43Z&se=2017-12-08T11%3A18%3A43Z&sp=r','https://myfactories.blob.core.windows.net/webdeploy/ArmParameter.json?sv=2016-05-31&sr=b&sig=aT2sJ0%2FHxQjv1wfODu%2BMpPQPPo6rT7FLEb2Ebd6g4js%3D&st=2017-12-07T11%3A13%3A46Z&se=2017-12-08T11%3A18%3A46Z&sp=r'
+
+Server=localhost\SQLEXPRESS;Database=master;Trusted_Connection=True;
+
+DIR\manu.a.pratap.singh
+
+Account					: be4baceb-25a1-4b6b-bde8-eb7122183185
+SubscriptionName		: Visual Studio Professional with MSDN
+SubscriptionId			: 54ecce53-5b7e-4faa-870c-ac479b0b83d7
+TenantId				: 3a8245c0-3fee-45f8-b985-3b71f26ebe84
+Environment				: AzureCloud
+
+Application Id			: be4baceb-25a1-4b6b-bde8-eb7122183185
+Secret Key				: xXlctVCuIQwNbt1m25d9u+LS//3FgASuZCPJl19iPrs=
+
+
+
+
+
+odata.type                 : Microsoft.DirectoryServices.Application
+objectType                 : Application
+objectId                   : 293641d3-9fbe-4877-aadf-0c8cf3ec522e
+deletionTimestamp          : 
+acceptMappedClaims         : 
+addIns                     : {}
+appId                      : be4baceb-25a1-4b6b-bde8-eb7122183185
+appRoles                   : {}
+availableToOtherTenants    : False
+displayName                : SampleADApp
+errorUrl                   : 
+groupMembershipClaims      : 
+homepage                   : http://OnDemandDemoApp1
+identifierUris             : {http://OnDemandDemoApp1}
+keyCredentials             : {}
+knownClientApplications    : {}
+logoutUrl                  : 
+oauth2AllowImplicitFlow    : False
+oauth2AllowUrlPathMatching : False
+oauth2Permissions          : {@{adminConsentDescription=Allow the application to access SampleADApp on behalf of the signed-in user.; adminConsentDisplayName=Access SampleADApp; 
+                             id=ee837c01-5957-4b21-a283-d8c01fd05838; isEnabled=True; type=User; userConsentDescription=Allow the application to access SampleADApp on your behalf.; userConsentDisplayName=Access 
+                             SampleADApp; value=user_impersonation}}
+oauth2RequirePostResponse  : False
+optionalClaims             : 
+passwordCredentials        : {@{customKeyIdentifier=QQB6AHUAcgBlAEEARAA=; endDate=2018-12-06T14:40:01.613Z; keyId=c1a275ef-8de8-48b9-aa99-1cb5ae73d956; startDate=2017-12-06T14:41:06.5122717Z; value=}}
+publicClient               : 
+recordConsentConditions    : 
+replyUrls                  : {}
+requiredResourceAccess     : {@{resourceAppId=797f4846-ba00-4fd7-ba43-dac1f8f63013; resourceAccess=System.Object[]}, @{resourceAppId=cfa8b339-82a2-471a-a3c9-0fc0be7a4093; resourceAccess=System.Object[]}, 
+                             @{resourceAppId=00000003-0000-0000-c000-000000000000; resourceAccess=System.Object[]}, @{resourceAppId=00000002-0000-0000-c000-000000000000; resourceAccess=System.Object[]}}
+samlMetadataUrl            : 
+tokenEncryptionKeyId      
+
+
+
+
+
+######################################################
+PS C:\windows\system32\WindowsPowerShell\v1.0> $credential = Get-Credential
+cmdlet Get-Credential at command pipeline position 1
+Supply values for the following parameters:
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account = Login-AzureRmAccount -Credential $credential -ServicePrincipal
+cmdlet Add-AzureRmAccount at command pipeline position 1
+Supply values for the following parameters:
+(Type !? for Help.)
+TenantId: 3a8245c0-3fee-45f8-b985-3b71f26ebe84
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account
+
+
+Account          : be4baceb-25a1-4b6b-bde8-eb7122183185
+SubscriptionName : Visual Studio Professional with MSDN
+SubscriptionId   : 54ecce53-5b7e-4faa-870c-ac479b0b83d7
+TenantId         : 3a8245c0-3fee-45f8-b985-3b71f26ebe84
+Environment      : AzureCloud
+
+
+
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account = Login-AzureRmAccount -Credential $credential -ServicePrincipal -TenantId 3a8245c0-3fee-45f8-b985-3b71f26ebe84
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account.Context.Account
+
+
+Id                    : be4baceb-25a1-4b6b-bde8-eb7122183185
+Type                  : ServicePrincipal
+Tenants               : {3a8245c0-3fee-45f8-b985-3b71f26ebe84}
+AccessToken           : 
+Credential            : 
+TenantMap             : {}
+CertificateThumbprint : 
+ExtendedProperties    : {[Subscriptions, 54ecce53-5b7e-4faa-870c-ac479b0b83d7], [Tenants, 3a8245c0-3fee-45f8-b985-3b71f26ebe84]}
+
+
+
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account.Context.Environment
+
+
+Name                                              : AzureCloud
+EnableAdfsAuthentication                          : False
+OnPremise                                         : False
+ActiveDirectoryServiceEndpointResourceId          : https://management.core.windows.net/
+AdTenant                                          : Common
+GalleryUrl                                        : https://gallery.azure.com/
+ManagementPortalUrl                               : http://go.microsoft.com/fwlink/?LinkId=254433
+ServiceManagementUrl                              : https://management.core.windows.net/
+PublishSettingsFileUrl                            : http://go.microsoft.com/fwlink/?LinkID=301775
+ResourceManagerUrl                                : https://management.azure.com/
+SqlDatabaseDnsSuffix                              : .database.windows.net
+StorageEndpointSuffix                             : core.windows.net
+ActiveDirectoryAuthority                          : https://login.microsoftonline.com/
+GraphUrl                                          : https://graph.windows.net/
+GraphEndpointResourceId                           : https://graph.windows.net/
+TrafficManagerDnsSuffix                           : trafficmanager.net
+AzureKeyVaultDnsSuffix                            : vault.azure.net
+DataLakeEndpointResourceId                        : https://datalake.azure.net
+AzureDataLakeStoreFileSystemEndpointSuffix        : azuredatalakestore.net
+AzureDataLakeAnalyticsCatalogAndJobEndpointSuffix : azuredatalakeanalytics.net
+AzureKeyVaultServiceEndpointResourceId            : https://vault.azure.net
+VersionProfiles                                   : {}
+ExtendedProperties                                : {}
+BatchEndpointResourceId                           : https://batch.core.windows.net/
+
+
+
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account.Context.Name
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account.Context.Subscription
+
+
+Name     : Visual Studio Professional with MSDN
+Id       : 54ecce53-5b7e-4faa-870c-ac479b0b83d7
+TenantId : 3a8245c0-3fee-45f8-b985-3b71f26ebe84
+State    : Enabled
+
+
+
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account.Context.Tenant
+
+
+Id        : 3a8245c0-3fee-45f8-b985-3b71f26ebe84
+Directory : 
+
+
+
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account.Context.Tenant.Id
+3a8245c0-3fee-45f8-b985-3b71f26ebe84
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account.Context.Tenant.TenantId
+3a8245c0-3fee-45f8-b985-3b71f26ebe84
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account.Context.VersionProfile
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account.Environments
+
+Key               Value            
+---               -----            
+AzureChinaCloud   AzureChinaCloud  
+AzureCloud        AzureCloud       
+AzureGermanCloud  AzureGermanCloud 
+AzureUSGovernment AzureUSGovernment
+
+
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $account = Login-AzureRmAccount -Credential $credential -ServicePrincipal -TenantId 3a8245c0-3fee-45f8-b985-3b71f26ebe84 -Subscription 54ecce53-5b7e-4faa-870c-ac479b0b83d7
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> Get-AzureAccount
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $azaccount = Get-AzureAccount
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $azaccount
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $script:AzureEnvironment = Get-AzureRmEnvironment -Name AzureCloud
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $script:AzureEnvironment
+
+
+Name                                              : AzureCloud
+EnableAdfsAuthentication                          : False
+OnPremise                                         : False
+ActiveDirectoryServiceEndpointResourceId          : https://management.core.windows.net/
+AdTenant                                          : Common
+GalleryUrl                                        : https://gallery.azure.com/
+ManagementPortalUrl                               : http://go.microsoft.com/fwlink/?LinkId=254433
+ServiceManagementUrl                              : https://management.core.windows.net/
+PublishSettingsFileUrl                            : http://go.microsoft.com/fwlink/?LinkID=301775
+ResourceManagerUrl                                : https://management.azure.com/
+SqlDatabaseDnsSuffix                              : .database.windows.net
+StorageEndpointSuffix                             : core.windows.net
+ActiveDirectoryAuthority                          : https://login.microsoftonline.com/
+GraphUrl                                          : https://graph.windows.net/
+GraphEndpointResourceId                           : https://graph.windows.net/
+TrafficManagerDnsSuffix                           : trafficmanager.net
+AzureKeyVaultDnsSuffix                            : vault.azure.net
+DataLakeEndpointResourceId                        : https://datalake.azure.net
+AzureDataLakeStoreFileSystemEndpointSuffix        : azuredatalakestore.net
+AzureDataLakeAnalyticsCatalogAndJobEndpointSuffix : azuredatalakeanalytics.net
+AzureKeyVaultServiceEndpointResourceId            : https://vault.azure.net
+VersionProfiles                                   : {}
+ExtendedProperties                                : {}
+BatchEndpointResourceId                           : https://batch.core.windows.net/
+
+
+
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $script:AzureEnvironment.ActiveDirectoryAuthority
+https://login.microsoftonline.com/
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> $script:AzureEnvironment.GraphUrl
+https://graph.windows.net/
+
+PS C:\windows\system32\WindowsPowerShell\v1.0> https://graph.windows.net/
