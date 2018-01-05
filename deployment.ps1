@@ -100,7 +100,7 @@ Function AddAzureContext()
 {
 	$password = ConvertTo-SecureString $script:ServicePrincipalPassword -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($script:ServicePrincipalId, $password)
-	$account = Add-AzureRmAccount -ServicePrincipal -Environment AzureCloud -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
+	$account = Add-AzureRmAccount -ServicePrincipal -Environment $script:AzureEnvironment.Name -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
 	Select-AzureRmSubscription -SubscriptionName $account.Context.Subscription.Name
 	Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) Subscription used '{0}'" -f $account.Context.Subscription.Id)
 	return $account.Context
@@ -2245,7 +2245,7 @@ Function UploadConfigFileToBlob()
     )
 	$password = ConvertTo-SecureString $password -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($username, $password)
-	Login-AzureRmAccount - -EnvironmentName "AzureCloud" -Credential $credential -SubscriptionId $subscriptionId -ErrorAction Stop | Out-Null
+	Login-AzureRmAccount - -EnvironmentName $script:AzureEnvironment.Name -Credential $credential -SubscriptionId $subscriptionId -ErrorAction Stop | Out-Null
 	$storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $resourceGroup `
 	-Name $storageAccountName `
 	-Location $location `
@@ -2368,7 +2368,7 @@ $script:docdbSuffix = "documents.azure.com"
 
 # Set locations were all resource are available. This might need to get updated if resources are deployed to more locations.
 $script:AzureLocations = @("West US", "North Europe", "West Europe")
-$script:AzureEnvironment = Get-AzureEnvironment AzureCloud
+$script:AzureEnvironment = Get-AzureEnvironment $script:AzureEnvironmentName
 
 # Set environment specific variables.
 $script:SuiteName = $script:DeploymentName
