@@ -363,3 +363,5 @@ $script:TemplateParameterUri = UploadFileToContainerBlob $script:TemplateParamet
 
 Write-Output $script:TemplateUri
 Write-Output $script:TemplateParameterUri
+Write-Host ("##vso[task.setvariable variable=TemplateUri;]$script:TemplateUri")
+Write-Host ("##vso[task.setvariable variable=TemplateParameterUri;]$script:TemplateParameterUri")

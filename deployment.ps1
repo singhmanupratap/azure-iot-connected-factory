@@ -2297,6 +2297,8 @@ Write-Output "PresetAzureDirectoryName ######$script:PresetAzureDirectoryName###
 Write-Output "VmAdminPassword ######$script:VmAdminPassword#######"
 Write-Output "BuildRepositoryLocalPath ######$script:BuildRepositoryLocalPath#######"
 Write-Output "ServicePrincipalPassword ######$script:ServicePrincipalPassword#######"
+Write-Output "TemplateUri ######$script:TemplateUri#######"
+Write-Output "TemplateParameterUri ######$script:TemplateParameterUri#######"
 
 $LowCost = $false
 $Force = $true
