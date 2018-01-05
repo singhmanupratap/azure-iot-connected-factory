@@ -9,9 +9,9 @@ Param(
 	[ValidateSet("AzureCloud")]
 	[string] $AzureEnvironmentName = "AzureCloud",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
-	[string] $PresetAzureAccountName = "be4baceb-25a1-4b6b-bde8-eb7122183185",
+	[string] $ServicePrincipalId = "be4baceb-25a1-4b6b-bde8-eb7122183185",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
-	[string] $PresetAzureAccountPassword = "man5480U#",
+	[string] $ServicePrincipalPassword = "man5480U#",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
 	[string] $AzureSubscriptionId = "54ecce53-5b7e-4faa-870c-ac479b0b83d7",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
@@ -23,8 +23,8 @@ Param(
 
 Function AddAzureContext()
 {
-	$password = ConvertTo-SecureString $script:PresetAzureAccountPassword -AsPlainText -Force
-	$credential = New-Object System.Management.Automation.PSCredential($script:PresetAzureAccountName, $password)
+	$password = ConvertTo-SecureString $script:ServicePrincipalPassword -AsPlainText -Force
+	$credential = New-Object System.Management.Automation.PSCredential($script:ServicePrincipalId, $password)
 	$account = Add-AzureRmAccount -ServicePrincipal -Environment $script:AzureEnvironmentName -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
 	Select-AzureRmSubscription -SubscriptionName $account.Context.Subscription.Name
 	Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) Subscription used '{0}'" -f $account.Context.Subscription.Id)
@@ -299,7 +299,7 @@ Function GetAzureStorageAccount()
 Write-Output "BuildRepositoryLocalPath  ######$script:BuildRepositoryLocalPath#######"
 Write-Output "DeploymentName ######$script:DeploymentName#######"
 Write-Output "AzureEnvironmentName ######$script:AzureEnvironmentName#######"
-Write-Output "PresetAzureAccountName ######$script:PresetAzureAccountName#######"
+Write-Output "ServicePrincipalId ######$script:ServicePrincipalId#######"
 Write-Output "AzureSubscriptionId ######$script:AzureSubscriptionId#######"
 Write-Output "PresetAzureLocationName ######$script:PresetAzureLocationName#######"
 Write-Output "AzureTenantId ######$script:AzureTenantId#######"
