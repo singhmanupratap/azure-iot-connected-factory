@@ -100,7 +100,7 @@ Function AddAzureContext()
 {
 	$password = ConvertTo-SecureString $script:ServicePrincipalPassword -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($script:ServicePrincipalId, $password)
-	$account = Add-AzureRmAccount -ServicePrincipal -Environment $script:AzureEnvironmentName -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
+	$account = Add-AzureRmAccount -ServicePrincipal -Environment AzureCloud -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
 	Select-AzureRmSubscription -SubscriptionName $account.Context.Subscription.Name
 	Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) Subscription used '{0}'" -f $account.Context.Subscription.Id)
 	return $account.Context
@@ -2366,7 +2366,7 @@ $script:docdbSuffix = "documents.azure.com"
 
 # Set locations were all resource are available. This might need to get updated if resources are deployed to more locations.
 $script:AzureLocations = @("West US", "North Europe", "West Europe")
-$script:AzureEnvironment = Get-AzureEnvironment $script:AzureEnvironmentName
+$script:AzureEnvironment = Get-AzureEnvironment AzureCloud
 
 # Set environment specific variables.
 $script:SuiteName = $script:DeploymentName
@@ -2400,7 +2400,7 @@ $script:UaSecretPassword = "password"
 $script:SubscriptionDataFile = "{0}/{1}-{2}-credentials.publishsettings" -f $script:IoTSuiteRootPath, $script:ServicePrincipalId, $script:PresetAzureSubscriptionName
 $script:TemplateParameteLocalFile = "$script:IoTSuiteRootPath\ArmParameter.json"
 
-$script:AzureEnvironment = Get-AzureEnvironment $script:AzureEnvironmentName
+$script:AzureEnvironment = Get-AzureEnvironment AzureCloud
 $script:AzureContext = AddAzureContext
 
 # Clear DNS
