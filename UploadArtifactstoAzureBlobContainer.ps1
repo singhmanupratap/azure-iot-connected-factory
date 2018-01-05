@@ -19,13 +19,13 @@ Param(
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
 	[string] $PresetAzureLocationName="West Europe"
 )
-#Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\UploadArtifactstoAzureBlobContainer.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','myfactories','AzureCloud','be4baceb-25a1-4b6b-bde8-eb7122183185','man5480U#','54ecce53-5b7e-4faa-870c-ac479b0b83d7','3a8245c0-3fee-45f8-b985-3b71f26ebe84','West Europe'
+#Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\UploadArtifactstoAzureBlobContainer.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','myfactories','AzureCloud','Aditya@manuapratapsinghaccenture.onmicrosoft.com','man5480U#','54ecce53-5b7e-4faa-870c-ac479b0b83d7','3a8245c0-3fee-45f8-b985-3b71f26ebe84','West Europe'
 
 Function AddAzureContext()
 {
 	$password = ConvertTo-SecureString $script:PresetAzureAccountPassword -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($script:PresetAzureAccountName, $password)
-	$account = Add-AzureRmAccount -Environment $script:AzureEnvironmentName -ServicePrincipal -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
+	$account = Add-AzureRmAccount -ServicePrincipal -Environment $script:AzureEnvironmentName -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
 	Select-AzureRmSubscription -SubscriptionName $account.Context.Subscription.Name
 	Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) Subscription used '{0}'" -f $account.Context.Subscription.Id)
 	return $account.Context

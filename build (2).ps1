@@ -70,41 +70,37 @@ Param(
 
 [Parameter(Position=0, Mandatory=$false, HelpMessage="Specify the command to execute.")]
 [ValidateSet("build", "updatesimulation", "local", "cloud", "clean", "delete")]
-[string] $Command = "cloud",
+[string] $Command = "build",
 [Parameter(Mandatory=$false, HelpMessage="Specify the configuration to build.")]
 [ValidateSet("debug", "release")]
-[string] $Configuration = "release",
+[string] $Configuration = "debug",
 [Parameter(Mandatory=$false, HelpMessage="Specify the name of the solution")]
 [ValidatePattern("^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{3,49}[a-zA-Z0-9]{1,1}$")]
 [ValidateLength(3, 62)]
-[string] $DeploymentName = "myfactories",
+[string] $DeploymentName = "local",
 [Parameter(Mandatory=$false, HelpMessage="Specify the name of the Azure environment to deploy your solution into.")]
 [ValidateSet("AzureCloud")]
 [string] $AzureEnvironmentName = "AzureCloud",
 [Parameter(Mandatory=$false, HelpMessage="Specify a username to use for the Azure deployment.")]
 [switch] $LowCost = $false,
 [Parameter(Mandatory=$false, HelpMessage="Enforce redeployment.")]
-[switch] $Force = $true,
+[switch] $Force = $false,
 [Parameter(Mandatory=$false, HelpMessage="Flag to use SKUs with lowest cost for all required resources.")]
-[string] $PresetAzureAccountName="Aditya@manuapratapsinghaccenture.onmicrosoft.com",
+[string] $PresetAzureAccountName,
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure subscription to use for the Azure deployment.")]
-[string] $PresetAzureSubscriptionName="Free Trial",
+[string] $PresetAzureSubscriptionName,
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
-[string] $PresetAzureLocationName="West Europe",
+[string] $PresetAzureLocationName,
 [Parameter(Mandatory=$false, HelpMessage="Specify the Azure AD name to use for the Azure deployment.")]
-[string] $PresetAzureDirectoryName="Default Directory",
+[string] $PresetAzureDirectoryName,
 [Parameter(Mandatory=$false, HelpMessage="Specify the admin password to use for the simulation VM.")]
-[string] $VmAdminPassword="man5480U!",
-[Parameter(Mandatory=$false, HelpMessage="Specify the admin password to use for the simulation VM.")]
-[string] $BuildRepositoryLocalPath
+[string] $VmAdminPassword
 )
-
 Function CheckCommandAvailability()
 {
     Param(
         [Parameter(Mandatory=$true,Position=0)] $command
     )
-
     try
     {
         Get-Command -Name "$command" -ErrorAction SilentlyContinue
@@ -116,8 +112,6 @@ Function CheckCommandAvailability()
     }
     return $true
 }
-
-
 function InstallNuget()
 {
     $nugetPath = "{0}/.nuget" -f $script:IoTSuiteRootPath
@@ -133,7 +127,6 @@ function InstallNuget()
         Invoke-WebRequest $sourceNugetExe -OutFile "$targetFile"
     }
 }
-
 Function CheckModuleVersion()
 {
     Param(
@@ -168,7 +161,6 @@ Function CheckModuleVersion()
         }
     }
 }
-
 Function GetAuthenticationResult()
 {
     Param
@@ -193,7 +185,6 @@ Function GetAuthenticationResult()
     $authResult = $authContext.AcquireToken($resourceUri, $psAadClientId, $aadRedirectUri, $prompt, $userId)
     return $authResult
 }
-
 #
 # Called if no Azure location is configured for the deployment to let the user chose one location from within the used Azure environment.
 # Note: do not use Write-Output since return value is used
@@ -210,7 +201,6 @@ Function GetAzureLocation()
         $locations += $newLocation
         $index += 1
     }
-
     Write-Host
     Write-Host ("Available locations in Azure environment '{0}':" -f $script:AzureEnvironment.Name)
     Write-Host
@@ -240,7 +230,6 @@ Function GetAzureLocation()
     # Workaround since errors pipe to the output stream
     $script:GetOrSetSettingValue = $location
 }
-
 Function ValidateLocation()
 {
     Param (
@@ -262,7 +251,6 @@ Function ValidateLocation()
     }
     return $false
 }
-
 Function GetResourceGroup()
 {
     $resourceGroup = Find-AzureRmResourceGroup -Tag @{"IotSuiteType" = $script:SuiteType} | ?{$_.Name -eq $script:SuiteName}
@@ -285,13 +273,11 @@ Function GetResourceGroup()
         return Get-AzureRmResourceGroup -Name $script:SuiteName 
     }
 }
-
 Function UpdateResourceGroupState()
 {
     Param(
         [Parameter(Mandatory=$true,Position=1)] [string] $state
     )
-
     $resourceGroup = Get-AzureRmResourceGroup -ResourceGroupName $script:ResourceGroupName
     if ($resourceGroup -ne $null)
     {
@@ -314,14 +300,12 @@ Function UpdateResourceGroupState()
         $resourceGroup = Set-AzureRmResourceGroup -Name $script:ResourceGroupName -Tag $tags
     }
 }
-
 Function ValidateResourceName()
 {
     Param(
         [Parameter(Mandatory=$true,Position=0)] [string] $resourceBaseName,
         [Parameter(Mandatory=$true,Position=1)] [string] $resourceType
     )
-
     # Generate a unique name
     $resourceUrl = " "
     $allowNameReuse = $true
@@ -373,7 +357,6 @@ Function ValidateResourceName()
     
     return GetUniqueResourceName $resourceBaseName $resourceType $resourceUrl
 }
-
 Function GetUniqueResourceName()
 {
     Param(
@@ -381,7 +364,6 @@ Function GetUniqueResourceName()
         [Parameter(Mandatory=$true,Position=1)] [string] $resourceType,
         [Parameter(Mandatory=$true,Position=2)] [string] $resourceUrl
     )
-
     # retry max 200 times if the random name already exists
     $max = 200
     $name = $resourceBaseName
@@ -397,14 +379,12 @@ Function GetUniqueResourceName()
     ClearDnsCache
     return $name
 }
-
 function AzureNameExists () {
      Param(
         [Parameter(Mandatory=$true,Position=0)] [string] $resourceBaseName,
         [Parameter(Mandatory=$true,Position=1)] [string] $resourceType,
         [Parameter(Mandatory=$true,Position=2)] [string] $resourceUrl
     )
-
     switch ($resourceType.ToLowerInvariant())
     {
         "microsoft.storage/storageaccounts"
@@ -436,7 +416,6 @@ function AzureNameExists () {
         }
     }
 }
-
 # Detect if DNS server always return fake response which corrupts DNS name availability check.
 function DetectIoTHubDNS()
 {
@@ -455,14 +434,12 @@ function DetectIoTHubDNS()
         Write-Verbose ("IotHub DNS resolution is normal for: {0}" -f $hostName)
     }
 }
-
 function HostReplyRequest() 
 {
     Param
     (
         [Parameter(Mandatory=$true,Position=2)] [string] $resourceUrl
     )
-
     try
     {
         Invoke-WebRequest -Uri $resourceUrl
@@ -483,7 +460,6 @@ function HostReplyRequest()
     }
     return $false
 }
-
 Function GetAzureStorageAccount()
 {
     $storageTempName = $script:SuiteName.ToLowerInvariant().Replace('-','')
@@ -491,49 +467,40 @@ Function GetAzureStorageAccount()
     $storage = Get-AzureRmStorageAccount -ResourceGroupName $script:ResourceGroupName -Name $storageAccountName -ErrorAction SilentlyContinue
     if ($storage -eq $null)
     {
-		Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Storage
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Creating new storage account: '{0}" -f $storageAccountName)
         $storage = New-AzureRmStorageAccount -ResourceGroupName $script:ResourceGroupName -StorageAccountName $storageAccountName -Location $script:AzureLocation -Type $script:StorageSkuName -Kind $script:StorageKind
     }
     return $storage
 }
-
 function GetDnsForPublicIpAddress()
 {
     return (ValidateResourceName $script:SuiteName.ToLowerInvariant() Microsoft.Network/publicIPAddresses).ToLowerInvariant()
 }
-
 function GetAzureIotHubName()
 {
     return ValidateResourceName $script:SuiteName Microsoft.Devices/iotHubs
 }
-
 function GetAzureVmName()
 {
     return ValidateResourceName $script:SuiteName Microsoft.Compute/VirtualMachines
 }
-
 function GetAzureRdxName()
 {
     return ValidateResourceName $script:SuiteName Microsoft.TimeSeriesInsights/environments
 }
-
 Function EnvSettingExists()
 {
     Param(
         [Parameter(Mandatory=$true,Position=0)] $settingName
     )
-
     return ($script:DeploymentSettingsXml.Environment.SelectSingleNode("//setting[@name = '$settingName']") -ne $null);
 }
-
 Function GetOrSetEnvSetting()
 {
     Param(
         [Parameter(Mandatory=$true,Position=0)] [string] $settingName,
         [Parameter(Mandatory=$true,Position=1)] [string] $function
     )
-
     $settingValue = GetEnvSetting $settingName $false
     if ([string]::IsNullOrEmpty($settingValue))
     {
@@ -548,30 +515,25 @@ Function GetOrSetEnvSetting()
     }
     return $settingValue
 }
-
 Function UpdateEnvSetting()
 {
     Param(
         [Parameter(Mandatory=$true,Position=0)] $settingName,
         [Parameter(Mandatory=$true,Position=1)] [AllowEmptyString()] $settingValue
     )
-
     $currentValue = GetEnvSetting $settingName $false
     if ($currentValue -ne $settingValue)
     {
         PutEnvSetting $settingName $settingValue
     }
 }
-
 Function GetEnvSetting()
 {
     Param(
         [Parameter(Mandatory=$true,Position=0)] [string] $settingName,
         [Parameter(Mandatory=$false,Position=1)] [switch] $errorOnNull = $true
     )
-
     $setting = $script:DeploymentSettingsXml.Environment.SelectSingleNode("//setting[@name = '$settingName']")
-
     if ($setting -eq $null)
     {
         if ($errorOnNull)
@@ -582,14 +544,12 @@ Function GetEnvSetting()
     }
     return $setting.value
 }
-
 Function PutEnvSetting()
 {
     Param(
         [Parameter(Mandatory=$True,Position=0)] [string] $settingName,
         [Parameter(Mandatory=$True,Position=1)] [AllowEmptyString()] [string] $settingValue
     )
-
     if (EnvSettingExists $settingName)
     {
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - {0} changed to {1}" -f $settingName, $settingValue)
@@ -605,21 +565,6 @@ Function PutEnvSetting()
     }
     $script:DeploymentSettingsXml.Save((Get-Item $script:DeploymentSettingsFile).FullName)
 }
-Function GetAzureAccountCredential()
-{
-	$accountName ="aditya@manuapratapsinghaccenture.onmicrosoft.com"
-	$password = ConvertTo-SecureString "man5480U#" -AsPlainText -Force
-	$credential = New-Object System.Management.Automation.PSCredential($accountName, $password)
-	return $credential
-}
-Function AddAzureAccount()
-{
-	
-	#$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -SubscriptionDataFile $script:SubscriptionDataFile
-	$credential = GetAzureAccountCredential
-	$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -Credential $credential
-	return $account
-}
 #
 # Called in case no account is configured to let user chose the account.
 # Note: do not use Write-Output since return value is used
@@ -630,7 +575,6 @@ Function GetAzureAccountInfo()
     {
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using preset account name '{0}'" -f $script:PresetAzureAccountName)
         $account = Get-AzureAccount $script:PresetAzureAccountName
-
     }
     if ($account -eq $null)
     {
@@ -638,7 +582,7 @@ Function GetAzureAccountInfo()
         if ($accounts -eq $null)
         {
             Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Add new Azure account"
-            $account = AddAzureAccount
+            $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
         }
         else 
         {
@@ -662,10 +606,9 @@ Function GetAzureAccountInfo()
                     Write-Host "Must be a number"
                     continue
                 }
-
                 if ($script:OptionIndex -eq $accounts.length + 1)
                 {
-                    $account = AddAzureAccount
+                    $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
                     break;
                 }
                 
@@ -687,7 +630,6 @@ Function GetAzureAccountInfo()
     # Workaround since errors pipe to the output stream
     $script:GetOrSetSettingValue = $account.Id
 }
-
 Function ValidateLoginCredentials()
 {
     # Validate Azure account
@@ -695,12 +637,12 @@ Function ValidateLoginCredentials()
     if ($account -eq $null)
     {
         Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Account '{0}' is unknown in Azure environment '{1}'. Add it." -f $script:AzureAccountName, $script:AzureEnvironment.Name)
-        $account = AddAzureAccount
+        $account = Add-AzureAccount -Environment $script:AzureEnvironment.Name
     }
     if ((Get-AzureSubscription -SubscriptionId ($account.Subscriptions -replace '(?:\r\n)',',').split(",")[0]) -eq $null)
     {
         Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - No subscriptions. Add account")
-        AddAzureAccount | Out-Null
+        Add-AzureAccount -Environment $script:AzureEnvironment.Name | Out-Null
     }
     
     # Validate Azure RM
@@ -722,8 +664,7 @@ Function ValidateLoginCredentials()
     if ($rmProfileLoaded -ne $true) {
         Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Logging in to your AzureRM account"
         try {
-			$credential = GetAzureAccountCredential
-            Login-AzureRmAccount -EnvironmentName $script:AzureEnvironment.Name -Credential $credential -ErrorAction Stop | Out-Null
+            Login-AzureRmAccount -EnvironmentName $script:AzureEnvironment.Name -ErrorAction Stop | Out-Null
         }
         catch
         {
@@ -740,13 +681,11 @@ Function ValidateLoginCredentials()
         }
     }
 }
-
 Function HostEntryExists()
 {
     Param(
         [Parameter(Mandatory=$true,Position=0)] $hostName
     )
-
     try
     {
         if ([Net.Dns]::GetHostEntry($hostName) -ne $null)
@@ -759,7 +698,6 @@ Function HostEntryExists()
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Did not find hostname: {0}" -f $hostName)
     return $false
 }
-
 Function ClearDnsCache()
 {
     if ($ClearDns -eq $null)
@@ -778,14 +716,12 @@ Function ClearDnsCache()
         Clear-DnsClientCache
     }
 }
-
 Function ReplaceFileParameters()
 {
     Param(
         [Parameter(Mandatory=$true,Position=0)] [string] $filePath,
         [Parameter(Mandatory=$true,Position=1)] [array] $arguments
     )
-
     $fileContent = Get-Content "$filePath" | Out-String
     for ($i = 0; $i -lt $arguments.Count; $i++)
     {
@@ -793,7 +729,6 @@ Function ReplaceFileParameters()
     }
     return $fileContent
 }
-
 # Generate a random password
 # Usage: RandomPassword <length>
 # For more information see
@@ -804,13 +739,10 @@ Function RandomPassword ($length = 15)
     $digits = 48..57
     $lcLetters = 65..90
     $ucLetters = 97..122
-
     $password = [char](Get-Random -Count 1 -InputObject ($lcLetters)) + [char](Get-Random -Count 1 -InputObject ($ucLetters)) + [char](Get-Random -Count 1 -InputObject ($digits)) + [char](Get-Random -Count 1 -InputObject ($punc))
     $password += get-random -Count ($length -4) -InputObject ($punc + $digits + $lcLetters + $ucLetters) | % -begin { $aa = $null } -process {$aa += [char]$_} -end {$aa}
-
     return $password
 }
-
 Function CreateAadClientSecret()
 {
     $newPassword = RandomPassword
@@ -824,7 +756,6 @@ Function CreateAadClientSecret()
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - New Secret Id: {0}" -f $secret.KeyId)
     return $newPassword
 }
-
 #
 # Called when no configuration for the AAD tenant to use was found to let the user choose one.
 # Note: do not use Write-Output since return value is used
@@ -885,7 +816,6 @@ Function GetAadTenant()
                 $index += 1
             }
         }
-
         if ($selectedIndex -eq -1)
         {
             Write-Host "Select an Active Directories to use"
@@ -914,12 +844,10 @@ Function GetAadTenant()
             $tenantId = $tenants[$selectedIndex - 1].Id
         }
     }
-
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - AAD Tenant ID is '{0}'" -f $tenantId)
     # Workaround since errors pipe to the output stream
     $script:GetOrSetSettingValue = $tenantId -as [string]
 }
-
 Function UpdateAadApp($tenantId)
 {
     # Check for application existence
@@ -952,10 +880,8 @@ Function UpdateAadApp($tenantId)
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Found application '{0}' with Id '{1}' and IdentifierUri '{2}'" -f $result.value[0].displayName, $result.value[0].appId, $result[0].identifierUri)
         $applicationId = $result.value[0].appId
     }
-
     $script:AadClientId = $applicationId
     UpdateEnvSetting "AadClientId" $applicationId
-
     # Check for ServicePrincipal
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check for service principal in '{0}', tenant '{1}' for application '{2}' with appID '{3}'" -f  $script:AzureEnvironment.Name, $tenantId, $script:WebAppDisplayName, $applicationId)
     $uri = "{0}{1}/servicePrincipals?api-version=1.6" -f $script:AzureEnvironment.GraphUrl, $tenantId
@@ -981,7 +907,6 @@ Function UpdateAadApp($tenantId)
         $resourceId = $result.value[0].objectId
         $roleId = ($result.value[0].appRoles| ?{$_.value -eq "admin"}).Id
     }
-
     # Check for Assigned User
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check for app role assigment in '{0}', tenant '{1}' for user with Id '{2}'" -f  $script:AzureEnvironment.Name, $tenantId, $authResult.UserInfo.UniqueId)
     $uri = "{0}{1}/users/{2}/appRoleAssignments?api-version=1.6" -f $script:AzureEnvironment.GraphUrl, $tenantId, $authResult.UserInfo.UniqueId
@@ -1005,14 +930,12 @@ Function UpdateAadApp($tenantId)
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - User with Id '{0}' has role 'Service Principal' already assigned for the application '{1}' with appID '{2}'" -f $authResult.UserInfo.UniqueId,$result.resourceDisplayName, $applicationId)
     }
 }
-
 Function InitializeDeploymentSettings()
 {
     #
     # Initialize deployment settings
     #
     Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using deployment settings filename {0}" -f $script:DeploymentSettingsFile)
-
     # read settings into XML variable
     if (!(Test-Path "$script:DeploymentSettingsFile"))
     {
@@ -1020,7 +943,6 @@ Function InitializeDeploymentSettings()
     }
     $script:DeploymentSettingsXml = [xml](Get-Content "$script:DeploymentSettingsFile")
 }
-
 Function InitializeEnvironment()
 {
     #
@@ -1029,13 +951,11 @@ Function InitializeEnvironment()
     $script:AzureAccountName = GetOrSetEnvSetting "AzureAccountName" "GetAzureAccountInfo" 
     Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Validate Azure account '{0}'" -f $script:AzureAccountName)
     ValidateLoginCredentials
-
     if ($script:PresetAzureSubscriptionName -ne $null -and $script:PresetAzuresubscriptionName -ne "")
     {
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using preset subscription name '{0}'" -f $script:PresetAzureSubscriptionName)
         $subscriptionId = Get-AzureRmSubscription -SubscriptionName $script:PresetAzureSubscriptionName
     }
-
     #
     # Select Azure subscription to use
     #
@@ -1088,7 +1008,6 @@ Function InitializeEnvironment()
                             break;
                         }
                     }
-
                     try
                     {
                         [int]$script:OptionIndex = Read-Host "Select an option from the above subscription list"
@@ -1098,12 +1017,10 @@ Function InitializeEnvironment()
                         Write-Host "Must be a number"
                         continue
                     }
-
                     if ($script:OptionIndex -lt 1 -or $script:OptionIndex -gt $subscriptions.length)
                     {
                         continue
                     }
-
                     if ($script:AzurePowershellVersionMajor -le 3)
                     {
                         $subscriptionId = $subscriptions[$script:OptionIndex - 1].SubscriptionId
@@ -1129,14 +1046,12 @@ Function InitializeEnvironment()
     $tenantId = $rmSubscription.TenantId
     Set-AzureRmContext -SubscriptionName $subscriptionName -TenantId $tenantId | Out-Null
     Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Selected Azure subscription {0} with ID {1}" -f $subscriptionName, $subscriptionId)
-
     # Initialize Tenant
     $script:AadTenant = GetOrSetEnvSetting "AadTenant" "GetAADTenant"
     if ($tenantId -ne $script:AadTenant)
     {
         throw ("Unable to use directory different than subscription tenant.")
     }
-
     #
     # Initialize location
     #
@@ -1156,20 +1071,17 @@ Function InitializeEnvironment()
     }
     Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Azure location to use is '{0}'" -f $script:AzureLocation)
 }
-
 # Replace browser endpoint configuration file in WebApp
 Function FixWebAppPackage()
 {
     Param(
         [Parameter(Mandatory=$true,Position=0)] [string] $filePath
     )
-
     # Set path correct
     $browserEndpointsName = "OPC.Ua.Browser.Endpoints.xml"
     $browserEndpointsFullName = "$script:IoTSuiteRootPath/WebApp/$browserEndpointsName"
     $zipfile = Get-Item "$filePath"
     [System.IO.Compression.ZipArchive]$zipArchive = [System.IO.Compression.ZipFile]::Open($zipfile.FullName, "Update")
-
     $entries = $zipArchive.Entries | Where-Object { $_.FullName -match ".*$browserEndpointsName" } 
     foreach ($entry in $entries)
     { 
@@ -1180,24 +1092,20 @@ Function FixWebAppPackage()
     }
     $zipArchive.Dispose()
 }
-
 Function ResourceObjectExists
  {
     Param(
         [Parameter(Mandatory=$true,Position=1)] [string] $resourceName,
         [Parameter(Mandatory=$true,Position=2)] [string] $type
     )
-
     return (GetResourceObject -resourceName $resourceName -type $type | Where-Object {$_.Name -eq $resourceName}) -ne $null
  }
-
 Function GetResourceObject
  {
     Param(
          [Parameter(Mandatory=$true,Position=1)] [string] $resourceName,	
          [Parameter(Mandatory=$true,Position=2)] [string] $type
     )
-
     $result = $null
     try
     {
@@ -1206,21 +1114,16 @@ Function GetResourceObject
     catch {}
     return $result
 }
-
 Function SimulationBuild
 {
     Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building Simulation for configuration '{0}'." -f $script:Configuration)
-
     # Check installation of required tools.
     CheckCommandAvailability "dotnet.exe" | Out-Null
-
     # call BuildSimulation.cmd
-    Invoke-Expression "$script:SimulationPath/Factory/BuildSimulation.cmd -c --config $script:Configuration"
-
+    Invoke-Expression "$script:SimulationFactoryPath/BuildSimulation.cmd -c --config $script:Configuration"
     # Provide other files
-    Copy-Item -Force "$script:SimulationPath/Factory/Dockerfile" "$script:SimulationBuildOutputPath" | Out-Null
+    Copy-Item -Force "$script:SimulationFactoryPath/Dockerfile" "$script:SimulationBuildOutputPath" | Out-Null
 }
-
 function CreateStationUrl
 {
     Param(
@@ -1233,7 +1136,6 @@ function CreateStationUrl
     $opcUrl = "opc.tcp://" + $station.Simulation.Id.ToLower() + "." + $net + ":" + $port + "/UA/" + $station.Simulation.Path
     return $opcUrl
 }
-
 function CreateProductionLineStationUrl
 {
     Param(
@@ -1243,7 +1145,6 @@ function CreateProductionLineStationUrl
     $station = ($productionLine.Stations | where { $_.Simulation.Type -eq $type})
     return CreateStationUrl -net $productionLine.Simulation.Network.ToLowerInvariant() -station $station
 }
-
 function UpdateBrowserEndpoints()
 {
     # Use a copy of the original to patch
@@ -1253,7 +1154,6 @@ function UpdateBrowserEndpoints()
     # Patch the endpoint configuration file. Grab a node we import into the patched file
     $xml = [xml] (Get-Content $originalFileName)
     $configuredEndpoint = $xml.ConfiguredEndpointCollection.Endpoints.ChildNodes[0]
-
     $xml = [xml] (Get-Content $applicationFileName)
     $content = Get-Content -raw $script:TopologyDescription
     $json = ConvertFrom-Json -InputObject $content
@@ -1263,11 +1163,9 @@ function UpdateBrowserEndpoints()
         $configuredEndpoint.Endpoint.EndpointUrl = CreateProductionLineStationUrl -productionLine $productionLine -type "Assembly"
         $child = $xml.ImportNode($configuredEndpoint, $true)
         $xml.ConfiguredEndpointCollection.Endpoints.AppendChild($child) | Out-Null
-
         $configuredEndpoint.Endpoint.EndpointUrl = CreateProductionLineStationUrl -productionLine $productionLine -type "Test"
         $child = $xml.ImportNode($configuredEndpoint, $true)
         $xml.ConfiguredEndpointCollection.Endpoints.AppendChild($child) | Out-Null
-
         $configuredEndpoint.Endpoint.EndpointUrl = CreateProductionLineStationUrl -productionLine $productionLine -type "Packaging"
         $child = $xml.ImportNode($configuredEndpoint, $true)
         $xml.ConfiguredEndpointCollection.Endpoints.AppendChild($child) | Out-Null
@@ -1286,120 +1184,74 @@ function UpdateBrowserEndpoints()
             $i++
         }
     }
-
     $xml.Save($applicationFileName)
 }
-
-Function Find-MsBuild([int] $MaxVersion = 2017)  
-{
-    $agentPath = "$Env:programfiles `(x86`)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin\msbuild.exe"
-    $devPath = "$Env:programfiles `(x86`)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\msbuild.exe"
-    $proPath = "$Env:programfiles `(x86`)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\Bin\msbuild.exe"
-    $communityPath = "$Env:programfiles `(x86`)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild.exe"
-    $fallback2015Path = "${Env:ProgramFiles(x86)}\MSBuild\14.0\Bin\MSBuild.exe"
-    $fallback2013Path = "${Env:ProgramFiles(x86)}\MSBuild\12.0\Bin\MSBuild.exe"
-    $fallbackPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319"
-
-    If ((2017 -le $MaxVersion) -And (Test-Path $agentPath)) { return $agentPath } 
-    If ((2017 -le $MaxVersion) -And (Test-Path $devPath)) { return $devPath } 
-    If ((2017 -le $MaxVersion) -And (Test-Path $proPath)) { return $proPath } 
-    If ((2017 -le $MaxVersion) -And (Test-Path $communityPath)) { return $communityPath } 
-    If ((2015 -le $MaxVersion) -And (Test-Path $fallback2015Path)) { return $fallback2015Path } 
-    If ((2013 -le $MaxVersion) -And (Test-Path $fallback2013Path)) { return $fallback2013Path } 
-    If (Test-Path $fallbackPath) { return $fallbackPath } 
-
-    throw "Yikes - Unable to find msbuild"
-}
-
 Function Build()
 {
     # Check installation of required tools.
     CheckCommandAvailability "msbuild.exe" | Out-Null
-
     # Restore packages.
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring nuget packages for solution.")
-    Invoke-Expression "$script:IoTSuiteRootPath/.nuget/nuget.exe restore $script:IoTSuiteRootPath/Connectedfactory.sln"
+    Invoke-Expression ".nuget/nuget restore ./Connectedfactory.sln"
     if ($LASTEXITCODE -ne 0)
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring nuget packages for solution failed.")
         throw "Restoring nuget packages for solution failed."
     }
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring dotnet packages for solution.")
-    Invoke-Expression "dotnet restore $script:IoTSuiteRootPath/Connectedfactory.sln"
+    Invoke-Expression "dotnet restore"
     if ($LASTEXITCODE -ne 0)
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Restoring dotnet packages for solution failed.")
         throw "Restoring dotnet packages for solution failed."
     }
-
     # Enforce WebApp admin mode if requested via environment.
     if (-not [string]::IsNullOrEmpty($env:EnforceWebAppAdminMode))
     {
         $script:EnforceWebAppAdminMode = '/p:DefineConstants="GRANT_FULL_ACCESS_PERMISSIONS"'
     }
-
     # Build the solution.
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building Connectedfactory.sln for configuration '{0}'." -f $script:Configuration)
-
-	$msbuildPath = Find-MsBuild 
-	Write-Output "MS BUILD PATH '$msbuildPath'"
-	$fs = New-Object -ComObject Scripting.FileSystemObject
-	$f = $fs.GetFile($msbuildPath)
-	$msbuildPath2 = $f.shortpath   
-    Invoke-Expression "$msbuildPath2 $script:IoTSuiteRootPath/Connectedfactory.sln /v:m /p:Configuration=$script:Configuration $script:EnforceWebAppAdminMode"
+    Invoke-Expression "msbuild Connectedfactory.sln /v:m /p:Configuration=$script:Configuration $script:EnforceWebAppAdminMode"
     if ($LASTEXITCODE -ne 0)
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building Connectedfactory.sln failed.")
         throw "Building Connectedfactory.sln failed."
     }
 }
-
 Function Package()
 {
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Packaging for configuration '{0}'." -f $script:Configuration)
-
     # Check installation of required tools.
     CheckCommandAvailability "msbuild.exe" | Out-Null
-
-    $msbuildPath = Find-MsBuild 
-	Write-Output "MS BUILD PATH '$msbuildPath'"
-	$fs = New-Object -ComObject Scripting.FileSystemObject
-	$f = $fs.GetFile($msbuildPath)
-	$msbuildPath2 = $f.shortpath   
-    Invoke-Expression "$msbuildPath2 $script:IotSuiteRootPath/WebApp/WebApp.csproj /v:m /T:Package /p:Configuration=$script:Configuration"
+    Invoke-Expression "msbuild `"$script:IotSuiteRootPath/WebApp/WebApp.csproj`" /v:m /T:Package /p:Configuration=$script:Configuration"
     if ($LASTEXITCODE -ne 0)
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Building WebApp.csproj failed.")
         throw "Building Webapp.csproj failed."
     }
-
     $root = "$script:IotSuiteRootPath";
     $webPackage = "$root/WebApp/obj/$script:Configuration/package/WebApp.zip";
     $packageDir = "$root/Build_Output/$script:Configuration/package";
-
     Write-Host 'Cleaning up previously generated packages';
     if ((Test-Path "$packageDir/WebApp.zip") -eq $true) 
     {
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Remove WebApp '{0}/WebApp.zip'" -f $packageDir)
         Remove-Item -Force "$packageDir/WebApp.zip" 2> $null
     }
-
     if ((Test-Path "$webPackage") -ne $true) 
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Failed to find WebApp package in directory '{0}'" -f $webPackage)
         throw "Failed to find package for the WebApp."
     }
-
     if (((Test-Path "$packageDir") -ne $true)) 
     {
         Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Creating package directory '{0}'" -f $packageDir)
         New-Item -Path "$packageDir" -ItemType Directory | Out-Null
     }
-
     Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Copying packages to package directory '{0}'" -f $packageDir)
     Copy-Item $webPackage -Destination $packageDir | Out-Null
 }
-
 Function UploadFileToContainerBlob()
 {
     Param(
@@ -1408,7 +1260,6 @@ Function UploadFileToContainerBlob()
         [Parameter(Mandatory=$true,Position=2)] [string] $containerName,
         [Parameter(Mandatory=$true,Position=3)] [bool] $secure
     )
-
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Upload file from '{0}' to storage account '{1}' in resource group '{2} as container '{3}' (secure: {4})" -f $filePath, $storageAccountName, $script:ResourceGroupName, $containerName, $secure)
     $containerName = $containerName.ToLowerInvariant()
     $file = Get-Item -Path "$filePath"
@@ -1430,7 +1281,6 @@ Function UploadFileToContainerBlob()
     New-AzureStorageContainer $ContainerName -Permission Off -Context $context -ErrorAction SilentlyContinue | Out-Null
     # Upload the file
     Set-AzureStorageBlobContent -Blob $fileName -Container $ContainerName -File $file.FullName -Context $context -Force | Out-Null
-
     # Generate Uri with sas token
     $storageAccount = [Microsoft.WindowsAzure.Storage.CloudStorageAccount]::Parse(("DefaultEndpointsProtocol=https;EndpointSuffix={0};AccountName={1};AccountKey={2}" -f $script:AzureEnvironment.StorageEndpointSuffix, $storageAccountName, $storageAccountKey))
     $blobClient = $storageAccount.CreateCloudBlobClient()
@@ -1474,7 +1324,6 @@ Function UploadFileToContainerBlob()
     {
         Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Cannot find container with name '{0}'" -f $containerName)
     }
-
     if ($secure)
     {
         $sasPolicy = New-Object Microsoft.WindowsAzure.Storage.Blob.SharedAccessBlobPolicy
@@ -1486,22 +1335,17 @@ Function UploadFileToContainerBlob()
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Blob URI is '{0}'" -f $blob.Uri.ToString() + $sasToken)
     return $blob.Uri.ToString() + $sasToken
 }
-
 Function FinalizeWebPackages
 {
     Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Uploading packages")
-
     # Set path correct
     $script:WebAppLocalPath = "$script:IoTSuiteRootPath/WebApp/obj/{0}/Package/WebApp.zip" -f $script:Configuration
-
     # Update browser endpoints
     UpdateBrowserEndpoints
-
     # Upload WebApp package
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Fix WebApp package")
     FixWebAppPackage $script:WebAppLocalPath
 }
-
 function RecordVmCommand
 {
     Param(
@@ -1538,24 +1382,20 @@ function RecordVmCommand
         Add-Content -path "$script:SimulationBuildOutputStopScript" -Value "$command `n" -NoNewline
     } 
 }
-
 function StartStation
 {
     Param(
         [Parameter(Mandatory=$true)] $net,
         [Parameter(Mandatory=$true)] $station
     )
-
     # Create the instance name
     $containerInstance = "Station." + $station.Simulation.Id + "." + $net
-
     # Create logs directory in the build output. They are copied to their final place in the VM by the init script
     # Each station needs a unique logs folder to avoid race conditions in the volume driver
     if (-not (Test-Path "$script:SimulationBuildOutputPath/$script:DockerLogsFolder/$containerInstance")) 
     {
         New-Item -Path "$script:SimulationBuildOutputPath/$script:DockerLogsFolder/$containerInstance" -ItemType "Directory" | Out-Null
     }
-
     # Set simulation variables.
     $hostName = $station.Simulation.Id.ToLower() + "." + $net
     $port = $station.Simulation.Port
@@ -1565,11 +1405,9 @@ function StartStation
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - For station '{0}' there was no port configured. Using default port 51210.." -f $containerInstance, $defaultPort)
         $port = "$defaultPort" 
     }
-
     # Disconnect from network on stop and delete.
     $vmCommand = "docker network disconnect -f $net $hostName"
     RecordVmCommand -command $vmCommand -stopScript -deleteScript
-
     # Start the station
     $stationUri = (CreateStationUrl -net $net -station $station)
     $commandLine = "../buildOutput/Station.dll " + $station.Simulation.Id + " " + $stationUri.ToLower() + " " + $station.Simulation.Args
@@ -1581,17 +1419,14 @@ function StartStation
     $vmCommand = "sleep 5s"
     RecordVmCommand -command $vmCommand -startScript
 }
-
 function StartMES
 {
     Param(
         [Parameter(Mandatory=$true)] $net,
         [Parameter(Mandatory=$true)] $productionLine
     )
-
     # Create the instance name
     $containerInstance = "MES." + $productionLine.Simulation.Mes + "." + $net
-
     # Create config and logs directory in the build output. They are copied to their final place in the VM by the init script
     if (-not (Test-Path "$script:SimulationBuildOutputPath/$script:DockerConfigFolder/$containerInstance")) 
     {
@@ -1601,9 +1436,8 @@ function StartMES
     {
         New-Item -Path "$script:SimulationBuildOutputPath/$script:DockerLogsFolder/$containerInstance" -ItemType "Directory" | Out-Null
     }
-
     # Create unique configuration for this production line's MES
-    $originalFileName = "$script:SimulationPath/Factory/MES/Opc.Ua.MES.Endpoints.xml"
+    $originalFileName = "$script:SimulationFactoryPath/MES/Opc.Ua.MES.Endpoints.xml"
     $applicationFileName = "$script:SimulationBuildOutputPath/Opc.Ua.MES.Endpoints.xml"
     Copy-Item $originalFileName $applicationFileName -Force
 
@@ -1619,7 +1453,7 @@ function StartMES
     Copy-Item -Path $applicationFileName -Destination "$script:SimulationBuildOutputPath/$script:DockerConfigFolder/$containerInstance"
 
     # Patch the application configuration file
-    $originalFileName = "$script:SimulationPath/Factory/MES/Opc.Ua.MES.Config.xml"
+    $originalFileName = "$script:SimulationFactoryPath/MES/Opc.Ua.MES.Config.xml"
     $applicationFileName = "$script:SimulationBuildOutputPath/Opc.Ua.MES.Config.xml"
     Copy-Item $originalFileName $applicationFileName -Force
     $xml = [xml] (Get-Content $applicationFileName)
@@ -1960,29 +1794,32 @@ function SimulationUpdate
     if ($vmPublicIp -eq $null)
     {
         # Add a public IP address to the VM
-        Invoke-Expression "$script:SimulationPath/Factory/Add-SimulationPublicIp -DeploymentName $script:DeploymentName"
+        Invoke-Expression "$script:SimulationFactoryPath/Add-SimulationPublicIp.ps1 -DeploymentName $script:DeploymentName"
         $removePublicIp = $true
     }
 
     try
     {
+        # Enable SSH access to VM.
+        Invoke-Expression "$script:SimulationFactoryPath/Enable-SimulationSshAccess.ps1 -DeploymentName $script:DeploymentName"
+
         # Create a PSCredential object for SSH
-        $securePassword = ConvertTo-SecureString $script:VmAdminPassword -AsPlainText -Force
+        $securePassword = ConvertTo-SecureString $script:VmAdminPassword -AsPlainText -Force
         $sshCredentials = New-Object System.Management.Automation.PSCredential ($script:VmAdminUsername, $securePassword)
 
         # Create SSH session
-        $ipAddress = Get-AzureRmPublicIpAddress -Name $script:VmName -ResourceGroupName $script:ResourceGroupName
-        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - IP address of VM is '{0}'" -f $ipAddress.IpAddress)
-        $session = New-SSHSession $ipAddress.IpAddress -Credential $sshCredentials -AcceptKey -ConnectionTimeout ($script:SshTimeout * 1000)
-        if ($Session -eq $null)
+        $vmPublicIp = Get-AzureRmPublicIpAddress -Name $script:VmName -ResourceGroupName $script:ResourceGroupName
+        Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - IP address of VM is '{0}'" -f $vmPublicIp.IpAddress)
+        $session = New-SSHSession $vmPublicIp.IpAddress -Credential $sshCredentials -AcceptKey -ConnectionTimeout ($script:SshTimeout * 1000)
+        if ($session -eq $null)
         {
-            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Cannot create SSH session to VM '{0}'" -f  $ipAddress.IpAddress)
-            throw ("Cannot create SSH session to VM '{0}'" -f  $ipAddress.IpAddress)
+            Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Cannot create SSH session to VM '{0}'" -f  $vmPublicIp.IpAddress)
+            throw ("Cannot create SSH session to VM '{0}'" -f  $vmPublicIp.IpAddress)
         }
         try
         {
             # Upload delete script and delete simulation.
-            Set-SCPFile -LocalFile "$script:SimulationBuildOutputDeleteScript" -RemotePath $script:DockerRoot -ComputerName $ipAddress.IpAddress -Credential $sshCredentials -NoProgress -OperationTimeout ($script:SshTimeout * 3)
+            Set-SCPFile -LocalFile "$script:SimulationBuildOutputDeleteScript" -RemotePath $script:DockerRoot -ComputerName $vmPublicIp.IpAddress -Credential $sshCredentials -NoProgress -OperationTimeout ($script:SshTimeout * 3)
             Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Delete simulation.")
             $vmCommand = "chmod +x $script:DockerRoot/deletesimulation"
             $status = Invoke-SSHCommand -Sessionid $session.SessionId -TimeOut ($script:SshTimeout * 5) -Command $vmCommand
@@ -1997,8 +1834,8 @@ function SimulationUpdate
 
             # Copy compressed simulation binaries and scripts to VM
             Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Upload simulation files to VM")
-            Set-SCPFile -LocalFile "$script:SimulationPath/simulation" -RemotePath $script:DockerRoot -ComputerName $ipAddress.IpAddress -Credential $sshCredentials -NoProgress -OperationTimeout ($script:SshTimeout * 3)
-            Set-SCPFile -LocalFile "$script:SimulationBuildOutputInitScript" -RemotePath $script:DockerRoot -ComputerName $ipAddress.IpAddress -Credential $sshCredentials -NoProgress -OperationTimeout ($script:SshTimeout * 3)
+            Set-SCPFile -LocalFile "$script:SimulationPath/simulation" -RemotePath $script:DockerRoot -ComputerName $vmPublicIp.IpAddress -Credential $sshCredentials -NoProgress -OperationTimeout ($script:SshTimeout * 3)
+            Set-SCPFile -LocalFile "$script:SimulationBuildOutputInitScript" -RemotePath $script:DockerRoot -ComputerName $vmPublicIp.IpAddress -Credential $sshCredentials -NoProgress -OperationTimeout ($script:SshTimeout * 3)
             $vmCommand = "chmod +x $script:DockerRoot/simulation"
             $status = Invoke-SSHCommand -Sessionid $session.SessionId -TimeOut $script:SshTimeout -Command $vmCommand
             if ($status.ExitStatus -ne 0)
@@ -2028,18 +1865,22 @@ function SimulationUpdate
         {
             throw $_
         }
-        finally
-        {
-            # Remove SSH session
-            Remove-SSHSession $session.SessionId | Out-Null
-        }
     }
     finally
     {
+        # Disable SSH access to VM.
+        Invoke-Expression "$script:SimulationFactoryPath/Disable-SimulationSshAccess.ps1 -DeploymentName $script:DeploymentName"
+
         # Remove the public IP address from the VM if we added it.
         if ($removePublicIp -eq $true)
         {
-            Invoke-Expression "$script:SimulationPath/Factory/Remove-SimulationPublicIp -DeploymentName $script:DeploymentName"
+            Invoke-Expression "$script:SimulationFactoryPath/Remove-SimulationPublicIp.ps1 -DeploymentName $script:DeploymentName"
+        }
+
+        # Remove SSH session
+        if ($session)
+        {
+            Remove-SSHSession $session.SessionId | Out-Null
         }
     }
 }
@@ -2063,10 +1904,10 @@ $EXPECTED_PSCX_MODULE_VERSION = "3.2.2"
 $EXPECTED_POSHSSH_MODULE_VERSION = "1.7.7"
 
 # Variable initialization
-#$script:IoTSuiteRootPath = Split-Path $MyInvocation.MyCommand.Path
-$script:IoTSuiteRootPath = $BuildRepositoryLocalPath
+$script:IoTSuiteRootPath = Split-Path $MyInvocation.MyCommand.Path
 $script:SimulationPath = "$script:IoTSuiteRootPath/Simulation"
-$script:CreateCertsPath = "$script:SimulationPath/Factory/CreateCerts"
+$script:SimulationFactoryPath = "$script:SimulationPath/Factory"
+$script:CreateCertsPath = "$script:SimulationFactoryPath/CreateCerts"
 $script:WebAppPath = "$script:IoTSuiteRootPath/WebApp"
 $script:DeploymentConfigPath = "$script:IoTSuiteRootPath/Deployment"
 $script:IotSuiteVersion = Get-Content ("{0}/VERSION.txt" -f $script:IoTSuiteRootPath)
@@ -2074,7 +1915,7 @@ $script:IotSuiteVersion = Get-Content ("{0}/VERSION.txt" -f $script:IoTSuiteRoot
 $script:OptionIndex = 0;
 # Timeout in seconds for SSH operations
 $script:SshTimeout = 120
-$script:SimulationBuildOutputPath = "$script:SimulationPath/Factory/buildOutput"
+$script:SimulationBuildOutputPath = "$script:SimulationFactoryPath/buildOutput"
 $script:SimulationBuildOutputInitScript = "$script:SimulationBuildOutputPath/initsimulation"
 $script:SimulationBuildOutputDeleteScript = "$script:SimulationBuildOutputPath/deletesimulation"
 $script:SimulationBuildOutputStartScript = "$script:SimulationBuildOutputPath/startsimulation"
@@ -2083,8 +1924,8 @@ $script:SimulationConfigPath = "$script:SimulationBuildOutputPath/Config"
 
 # Import and check installed Azure cmdlet version
 $script:AzurePowershellVersionMajor = (Get-Module -ListAvailable -Name Azure).Version.Major
-#CheckModuleVersion PSCX $EXPECTED_PSCX_MODULE_VERSION
-#CheckModuleVersion Posh-SSH $EXPECTED_POSHSSH_MODULE_VERSION
+CheckModuleVersion PSCX $EXPECTED_PSCX_MODULE_VERSION
+CheckModuleVersion Posh-SSH $EXPECTED_POSHSSH_MODULE_VERSION
 
 # Validate command line semantic
 if ($script:Command -eq "cloud" -or $script:Command -eq "delete" -and $script:DeploymentName -eq "local")
@@ -2160,15 +2001,11 @@ $script:DockerCertsFolder = "$script:DockerSharedFolder/CertificateStores/UA App
 $script:DockerProxyRepo = "microsoft/iot-edge-opc-proxy"
 $script:DockerProxyVersion = "1.0.2"
 $script:DockerPublisherRepo = "microsoft/iot-edge-opc-publisher"
-$script:DockerPublisherVersion = "2.1.1"
+$script:DockerPublisherVersion = "2.1.4"
 # todo remove
 $script:UaSecretBaseName = "UAWebClient"
 # Note: The password could only be changed if it is synced with the password used in CreateCerts.exe
 $script:UaSecretPassword = "password"
-
-$script:SubscriptionDataFile = "{0}/{1}-{2}-credentials.publishsettings" -f $script:IoTSuiteRootPath, $script:PresetAzureAccountName, $script:PresetAzureSubscriptionName
-
-Write-Output "Subscription Data File ######$script:SubscriptionDataFile"
 
 # Load System.Web
 Add-Type -AssemblyName System.Web
@@ -2579,6 +2416,9 @@ Write-Verbose  "$(Get-Date –f $TIME_STAMP_FORMAT) - Updating config file setti
 UpdateEnvSetting "ServiceStoreAccountName" $script:StorageAccount.StorageAccountName
 UpdateEnvSetting "SolutionStorageAccountConnectionString" $script:ArmResult.Outputs['storageConnectionString'].Value
 UpdateEnvSetting "IotHubOwnerConnectionString" $script:ArmResult.Outputs['iotHubOwnerConnectionString'].Value
+UpdateEnvSetting "IotHubEventHubName" $script:ArmResult.Outputs['iotHubEventHubName'].Value
+UpdateEnvSetting "IotHubEventHubEndpointIotHubOwnerConnectionString" $script:ArmResult.Outputs['iotHubEventHubEndpointIotHubOwnerConnectionString'].Value
+UpdateEnvSetting "IotHubTelemetryConsumerGroup" $script:ArmResult.Outputs['iotHubTelemetryConsumerGroup'].Value
 UpdateEnvSetting "RdxAuthenticationClientSecret" $script:RdxAuthenticationClientSecret
 UpdateEnvSetting "RdxDnsName" $script:ArmResult.Outputs['rdxDnsName'].Value
 UpdateEnvSetting "RdxEnvironmentId" $script:ArmResult.Outputs['rdxEnvironmentId'].Value

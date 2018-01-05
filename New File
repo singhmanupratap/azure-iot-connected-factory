@@ -1,3 +1,24 @@
+ApplicationDisplayName: ConnectedFactoryRMUser
+Password: man5480U!
+
+
+Account          : singh.manupratap@gmail.com
+SubscriptionName : Visual Studio Professional with MSDN
+SubscriptionId   : 54ecce53-5b7e-4faa-870c-ac479b0b83d7
+TenantId         : 3a8245c0-3fee-45f8-b985-3b71f26ebe84
+Environment      : AzureCloud
+
+
+ServicePrincipalNames : {http://ConnectedFactoryRMUser, 
+                        6a0fabaf-3938-4064-a097-c7e248991fe8}
+ApplicationId         : 6a0fabaf-3938-4064-a097-c7e248991fe8
+DisplayName           : ConnectedFactoryRMUser
+Id                    : cea0ba7a-bce2-46fb-a992-ed89125617be
+Type                  : ServicePrincipal
+
+
+
+
 Environment				: AzureCloud
 Account					: singh.manupratap@gmail.com
 TenantId				: 3a8245c0-3fee-45f8-b985-3b71f26ebe84
@@ -44,6 +65,11 @@ Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-fac
 Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\deployment.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','myfactories','AzureCloud','be4baceb-25a1-4b6b-bde8-eb7122183185','xXlctVCuIQwNbt1m25d9u+LS//3FgASuZCPJl19iPrs=','54ecce53-5b7e-4faa-870c-ac479b0b83d7','3a8245c0-3fee-45f8-b985-3b71f26ebe84','West Europe','https://myfactories.blob.core.windows.net/webdeploy/ConnectedfactoryMapKey.json?sv=2016-05-31&sr=b&sig=Yc1KUWi7ii1Rh49hkFB0LB3gGJqDlL33Mwl6mqgJZJ4%3D&st=2017-12-07T11%3A13%3A43Z&se=2017-12-08T11%3A18%3A43Z&sp=r','https://myfactories.blob.core.windows.net/webdeploy/ArmParameter.json?sv=2016-05-31&sr=b&sig=aT2sJ0%2FHxQjv1wfODu%2BMpPQPPo6rT7FLEb2Ebd6g4js%3D&st=2017-12-07T11%3A13%3A46Z&se=2017-12-08T11%3A18%3A46Z&sp=r'
 
 Server=localhost\SQLEXPRESS;Database=master;Trusted_Connection=True;
+
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\build-new.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','release','connectedfactories'
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\UploadArtifactstoAzureBlobContainer.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','connectedfactories','AzureCloud','singh.manupratap@gmail.com','MAN5480U#','54ecce53-5b7e-4faa-870c-ac479b0b83d7','3a8245c0-3fee-45f8-b985-3b71f26ebe84','West Europe'
+Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\deployment.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','connectedfactories','AzureCloud','singh.manupratap@gmail.com','MAN5480U#','54ecce53-5b7e-4faa-870c-ac479b0b83d7','3a8245c0-3fee-45f8-b985-3b71f26ebe84','West Europe','$script:TemplateUri','$script:TemplateParameterUri','MAN5480U#'
+
 
 DIR\manu.a.pratap.singh
 

@@ -17,7 +17,7 @@
     Use low cost SKUs of the required Azure resources.
 .PARAMETER Force
     Enforced deployment even there is already a deployment with the same name.
-.PARAMETER PresetAzureAccountName
+.PARAMETER ServicePrincipalId
     The name of the user account to use. This prevents from entering the selection menu if the account is valid.
 .PARAMETER PresetAzureSubscriptionName
     The name of the Azure subscription to use. This prevents from entering the selection menu if the subscription name is valid.
@@ -50,7 +50,7 @@
     ./build.ps1 cloud -Configuration release -DeploymentName mydeployment -LowCost
     Build the release version of your solution and deploys it to the AzureCloud environment. The deployment is using those SKUs of the required resources which generate lowest cost.
 .EXAMPLE
-    ./build.ps1 cloud -Configuration release -DeploymentName mydeployment -PresetAzureAccountName myname@mydomain.com -PresetAzureSubscriptionName myszuresubscription -PresetAzureLocationName "West Europe" -PresetAzureDirectoryName mydomain.com
+    ./build.ps1 cloud -Configuration release -DeploymentName mydeployment -ServicePrincipalId myname@mydomain.com -PresetAzureSubscriptionName myszuresubscription -PresetAzureLocationName "West Europe" -PresetAzureDirectoryName mydomain.com
     Build the release version of your solution and deploys it to the AzureCloud environment using the preset values. This allows you to run the script without
     selecting any values manually.
 .EXAMPLE
@@ -77,26 +77,30 @@ Param(
 	[ValidateSet("AzureCloud")]
 	[string] $AzureEnvironmentName = "AzureCloud",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
-	[string] $PresetAzureAccountName = "be4baceb-25a1-4b6b-bde8-eb7122183185",
+	[string] $ServicePrincipalId = "be4baceb-25a1-4b6b-bde8-eb7122183185",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
-	[string] $PresetAzureAccountPassword = "man5480U#",
+	[string] $ServicePrincipalPassword = "man5480U#",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
 	[string] $AzureSubscriptionId = "54ecce53-5b7e-4faa-870c-ac479b0b83d7",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
 	[string] $AzureTenantId = "3a8245c0-3fee-45f8-b985-3b71f26ebe84",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
 	[string] $PresetAzureLocationName="West Europe",
-		[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
+	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
 	[string] $TemplateUri="West Europe",
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
-	[string] $TemplateParameterUri="West Europe"
+	[string] $TemplateParameterUri="West Europe",
+	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
+	[string] $VmAdminPassword="man5480U#",
+	[Parameter(Mandatory=$false, HelpMessage="Specify the Azure location to use for the Azure deployment.")]
+	[string] $AzureAccountOwnerName = "Aditya@manuapratapsinghaccenture.onmicrosoft.com"
 )
 
 Function AddAzureContext()
 {
-	$password = ConvertTo-SecureString $script:PresetAzureAccountPassword -AsPlainText -Force
-	$credential = New-Object System.Management.Automation.PSCredential($script:PresetAzureAccountName, $password)
-	$account = Add-AzureRmAccount -Environment $script:AzureEnvironmentName -ServicePrincipal -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
+	$password = ConvertTo-SecureString $script:ServicePrincipalPassword -AsPlainText -Force
+	$credential = New-Object System.Management.Automation.PSCredential($script:ServicePrincipalId, $password)
+	$account = Add-AzureRmAccount -ServicePrincipal -Environment $script:AzureEnvironmentName -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
 	Select-AzureRmSubscription -SubscriptionName $account.Context.Subscription.Name
 	Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) Subscription used '{0}'" -f $account.Context.Subscription.Id)
 	return $account.Context
@@ -212,6 +216,78 @@ Function GetADALAccessToken
     return $authResult.AccessToken
 }
 
+Function GetAuthenticationResult2()
+{
+    Param
+    (
+        [Parameter(Mandatory=$true, Position=0)] [string] $tenant,
+        [Parameter(Mandatory=$true, Position=1)] [string] $authUri,
+        [Parameter(Mandatory=$true, Position=2)] [string] $resourceUri,
+        [Parameter(Mandatory=$false, Position=3)] [string] $user = $null,
+        [Parameter(Mandatory=$false, Position=4)] [string] $prompt = $null,
+        [Parameter(Mandatory=$false, Position=5)] [string] $clientId = $null,
+        [Parameter(Mandatory=$false, Position=6)] [string] $clientKey = "Auto"
+    )
+   
+    #Add-Type -AssemblyName System.Web
+    # Load System.Security.Cryptography.X509Certificates
+    #Add-Type -AssemblyName System.Security
+ 
+    #$adal = "${env:ProgramFiles(x86)}\Microsoft SDKs\Azure\PowerShell\ServiceManagement\Azure\Services\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
+    #$adalforms = "${env:ProgramFiles(x86)}\Microsoft SDKs\Azure\PowerShell\ServiceManagement\Azure\Services\Microsoft.IdentityModel.Clients.ActiveDirectory.WindowsForms.dll"
+ 
+    #[System.Reflection.Assembly]::LoadFrom($adal) | Out-Null
+    #[System.Reflection.Assembly]::LoadFrom($adalforms) | Out-Null
+ 
+    $authUri = "https://login.windows.net/$tenant/" 
+    $resourceUri = "https://graph.windows.net/"#"https://management.core.windows.net/" 
+ 
+    # Create credential for client application 
+    $clientCred = [Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential]::new($clientId, $clientKey) 
+ 
+    # Create AuthenticationContext for acquiring token 
+    $authContext = [Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext]::new($authUri, $false) 
+ 
+   # Acquire the authentication result 
+    $authResult = $authContext.AcquireTokenAsync($resourceUri, $clientCred)
+
+    return $authResult.Result;
+}
+
+function GetAuthToken
+{
+       Param
+    (
+        [Parameter(Mandatory=$true, Position=0)] [string] $tenant,
+        [Parameter(Mandatory=$true, Position=1)] [string] $authUri,
+        [Parameter(Mandatory=$true, Position=2)] [string] $resourceUri,
+        [Parameter(Mandatory=$false, Position=3)] [string] $user = $null,
+        [Parameter(Mandatory=$false)] [string] $prompt = "Auto"
+    )
+ 
+       $adal = "${env:ProgramFiles(x86)}\Microsoft SDKs\Azure\PowerShell\ServiceManagement\Azure\Services\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
+ 
+       $adalforms = "${env:ProgramFiles(x86)}\Microsoft SDKs\Azure\PowerShell\ServiceManagement\Azure\Services\Microsoft.IdentityModel.Clients.ActiveDirectory.WindowsForms.dll"
+ 
+       [System.Reflection.Assembly]::LoadFrom($adal) | Out-Null
+ 
+       [System.Reflection.Assembly]::LoadFrom($adalforms) | Out-Null
+ 
+       $clientId = "1950a258-227b-4e31-a9cf-717495945fc2" 
+ 
+       $redirectUri = "urn:ietf:wg:oauth:2.0:oob"
+ 
+       $resourceAppIdURI = "https://graph.windows.net"
+ 
+       $authority = 'https://login.windows.net/' + $tenant
+ 
+       $authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
+ 
+       $authResult = $authContext.AcquireTokenAsync($resourceAppIdURI, $clientId,$redirectUri, "Auto")
+ 
+       return $authResult
+}
+
 Function GetAuthenticationResult()
 {
     Param
@@ -234,8 +310,6 @@ Function GetAuthenticationResult()
     }
     write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - {0}, {1}, {2}, {3}" -f $resourceUri, $psAadClientId, $aadRedirectUri, $userId.Id)
     $authResult = $authContext.AcquireToken($resourceUri, $psAadClientId, $aadRedirectUri, $prompt, $userId)
-
-	#$authResult = $authContext.AcquireToken($resourceUri, $psAadClientId, $aadRedirectUri)
     return $authResult
 }
 
@@ -276,8 +350,8 @@ Function GetAuthenticationHeader()
 	#$credential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential($applicationId, $secretKey)
 
 	#$authContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext($authority)
-	##$password = ConvertTo-SecureString $script:PresetAzureAccountPassword -AsPlainText -Force
-	##$credential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential($script:PresetAzureAccountName, $password)
+	##$password = ConvertTo-SecureString $script:ServicePrincipalPassword -AsPlainText -Force
+	##$credential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential($script:ServicePrincipalId, $password)
 	###$authResult = $authContext.AcquireToken($resourceUri,$psAadClientId,$credential)
 
 	##"urn:ietf:params:oauth:grant-type:jwt-bearer"
@@ -289,25 +363,25 @@ Function GetAuthenticationHeader()
     return $header
 }
 
-Function GetAuthToken
-{
-    Param
-    (
-		[Parameter(Mandatory=$true)]
-		$tenant
-    )
-    $clientId = "1950a258-227b-4e31-a9cf-717495945fc2" 
-    $redirectUri = "urn:ietf:wg:oauth:2.0:oob"
-    $resourceAppIdURI = "https://graph.microsoft.com"
-    $authority = "https://login.microsoftonline.com/$tenant"
-    $authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
-    $applicationId="be4baceb-25a1-4b6b-bde8-eb7122183185"
-	$secretKey="xXlctVCuIQwNbt1m25d9u+LS//3FgASuZCPJl19iPrs="
-	$credential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential($applicationId, $secretKey)
-    $AADCredential = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential" -ArgumentList $credential.UserName,$credential.Password
-    $authResult = $authContext.AcquireToken($resourceAppIdURI, $clientId, $AADCredential)
-    return $authResult
-}
+#Function GetAuthToken
+#{
+#    Param
+#    (
+#		[Parameter(Mandatory=$true)]
+#		$tenant
+#    )
+#    $clientId = "1950a258-227b-4e31-a9cf-717495945fc2" 
+#    $redirectUri = "urn:ietf:wg:oauth:2.0:oob"
+#    $resourceAppIdURI = "https://graph.microsoft.com"
+#    $authority = "https://login.microsoftonline.com/$tenant"
+#    $authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
+#    $applicationId="be4baceb-25a1-4b6b-bde8-eb7122183185"
+#	$secretKey="xXlctVCuIQwNbt1m25d9u+LS//3FgASuZCPJl19iPrs="
+#	$credential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential($applicationId, $secretKey)
+#    $AADCredential = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential" -ArgumentList $credential.UserName,$credential.Password
+#    $authResult = $authContext.AcquireToken($resourceAppIdURI, $clientId, $AADCredential)
+#    return $authResult
+#}
 
 #
 # Called if no Azure location is configured for the deployment to let the user chose one location from within the used Azure environment.
@@ -725,17 +799,17 @@ Function PutEnvSetting()
 }
 Function GetAzureAccountCredential()
 {
-	$accountName = $PresetAzureAccountName
-	$password = ConvertTo-SecureString $PresetAzureAccountPassword -AsPlainText -Force
+	$accountName = $ServicePrincipalId
+	$password = ConvertTo-SecureString $ServicePrincipalPassword -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($accountName, $password)
 	return $credential
 }
 Function AddAzureAccount()
 {
-	$accountName = $PresetAzureAccountName
-	$password = ConvertTo-SecureString $PresetAzureAccountPassword -AsPlainText -Force
+	$accountName = $ServicePrincipalId
+	$password = ConvertTo-SecureString $ServicePrincipalPassword -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($accountName, $password)
-	$account = Add-AzureRmAccount -Environment $script:AzureEnvironment.Name -Credential $credential -ServicePrincipal -TenantId $script:AzureTenantId #-Subscription $script:PresetAzureSubscriptionName
+	$account = Add-AzureRmAccount -ServicePrincipal -Environment $script:AzureEnvironment.Name -Credential $credential -TenantId $script:AzureTenantId #-Subscription $script:PresetAzureSubscriptionName
 	
 	#$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -SubscriptionDataFile $script:SubscriptionDataFile
 	#$credential = GetAzureAccountCredential
@@ -748,10 +822,10 @@ Function AddAzureAccount()
 #
 Function GetAzureAccountInfo()
 {
-    if ($script:PresetAzureAccountName -ne $null -and $script:PresetAzureAccountName -ne "")
+    if ($script:ServicePrincipalId -ne $null -and $script:ServicePrincipalId -ne "")
     {
-        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using preset account name '{0}'" -f $script:PresetAzureAccountName)
-        $account = Get-AzureAccount $script:PresetAzureAccountName
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Using preset account name '{0}'" -f $script:ServicePrincipalId)
+        $account = Get-AzureAccount $script:ServicePrincipalId
 
     }
     if ($account -eq $null)
@@ -927,7 +1001,7 @@ Function CreateAadClientSecret()
     Remove-AzureRmADAppCredential -ApplicationId $script:AadClientId -All -Force
     # create new secret for web app, $secret is converted to PSAD type
     # keep $newPassword to be returned as a string
-    $secret = $newPassword
+    $secret = ConvertTo-SecureString -String $newPassword -AsPlainText -Force 
     $startDate = Get-Date
     $secret = New-AzureRmADAppCredential -ApplicationId $script:AadClientId -StartDate $startDate -EndDate $startDate.AddYears(1) -Password $secret
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - New Secret Id: {0}" -f $secret.KeyId)
@@ -975,7 +1049,7 @@ Function GetAadTenant()
                 $tenant = $tenantObj.Id
             }
             $uri = "{0}{1}/me?api-version=1.6" -f $script:AzureEnvironment.GraphUrl, $tenant
-            $authResult = GetAuthenticationResult $tenant $script:AzureEnvironment.ActiveDirectoryAuthority $script:AzureEnvironment.GraphUrl $script:AzureAccountName -Prompt "Auto"
+            $authResult = GetAuthenticationResult2 $tenant $script:AzureEnvironment.ActiveDirectoryAuthority $script:AzureEnvironment.GraphUrl $script:AzureAccountName -Prompt "Auto" -clientId $script:ServicePrincipalId -clientKey $script:ServicePrincipalPassword
             $header = $authResult.CreateAuthorizationHeader()
             $result = Invoke-RestMethod -Method "GET" -Uri $uri -Headers @{"Authorization"=$header;"Content-Type"="application/json"}
             if ($result -ne $null)
@@ -1035,11 +1109,9 @@ Function UpdateAadApp($tenantId)
     Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check if application '{0}' with IdentifierUri '{1}' exists in Azure environment '{2}'" -f $script:WebAppDisplayName , $script:WebAppIdentifierUri, $script:AzureEnvironment.Name)
     $uri = "{0}{1}/applications?api-version=1.6" -f $script:AzureEnvironment.GraphUrl, $tenantId
     $searchUri = "{0}&`$filter=identifierUris/any(uri:uri%20eq%20'{1}')" -f $uri, [System.Web.HttpUtility]::UrlEncode($script:WebAppIdentifierUri)
-    
-	$authResult = GetAuthenticationResult $tenantId $script:AzureEnvironment.ActiveDirectoryAuthority $script:AzureEnvironment.GraphUrl $script:AzureAccountName
+    $authResult = GetAuthenticationResult2 $tenantId $script:AzureEnvironment.ActiveDirectoryAuthority $script:AzureEnvironment.GraphUrl $script:AzureAccountName  -clientId $script:ServicePrincipalId -clientKey $script:ServicePrincipalPassword
     $header = $authResult.CreateAuthorizationHeader()
-    $result = Invoke-RestMethod -Method "GET" -Uri $uri -Headers @{"Authorization"=$header;"Content-Type"="application/json"}
-	$script:AuthenticationResult=$result
+    $result = Invoke-RestMethod -Method "GET" -Uri $searchUri -Headers @{"Authorization"=$header;"Content-Type"="application/json"}
     if ($result.value.Count -eq 0)
     {
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Application '{0}' not found, create it with IdentifierUri '{1}'" -f $script:WebAppDisplayName, $script:WebAppIdentifierUri)
@@ -1061,7 +1133,7 @@ Function UpdateAadApp($tenantId)
     else
     {
         Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Found application '{0}' with Id '{1}' and IdentifierUri '{2}'" -f $result.value[0].displayName, $result.value[0].appId, $result[0].identifierUri)
-        $applicationId = ($result.value|Where-Object { $_.objectId -eq "293641d3-9fbe-4877-aadf-0c8cf3ec522e" }).appId #$result.value[0].appId
+        $applicationId = $result.value[0].appId
     }
 
     $script:AadClientId = $applicationId
@@ -1094,13 +1166,16 @@ Function UpdateAadApp($tenantId)
     }
 
     # Check for Assigned User
-    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check for app role assigment in '{0}', tenant '{1}' for user with Id '{2}'" -f  $script:AzureEnvironment.Name, $tenantId, $authResult.UserInfo.UniqueId)
-    $uri = "{0}{1}/users/{2}/appRoleAssignments?api-version=1.6" -f $script:AzureEnvironment.GraphUrl, $tenantId, $authResult.UserInfo.UniqueId
+
+	$userResult = Get-AzureRmADUser -UserPrincipalName $script:AzureAccountOwnerName
+
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Check for app role assigment in '{0}', tenant '{1}' for user with Id '{2}'" -f  $script:AzureEnvironment.Name, $tenantId, $userResult.Id)
+    $uri = "{0}{1}/users/{2}/appRoleAssignments?api-version=1.6" -f $script:AzureEnvironment.GraphUrl, $tenantId, $userResult.Id
     $result = Invoke-RestMethod -Method "GET" -Uri $uri -Headers @{"Authorization"=$header;"Content-Type"="application/json"}
     if (($result.value | ?{$_.ResourceId -eq $resourceId}) -eq $null)
     {
-        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Create app role assigment 'principalId' in '{0}', tenant '{1}' for user with Id '{2}'" -f  $script:AzureEnvironment.Name, $tenantId, $authResult.UserInfo.UniqueId)
-        $body = "{ `"id`": `"$roleId`", `"principalId`": `"$($authResult.UserInfo.UniqueId)`", `"resourceId`": `"$resourceId`" }"
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Create app role assigment 'principalId' in '{0}', tenant '{1}' for user with Id '{2}'" -f  $script:AzureEnvironment.Name, $tenantId, $userResult.Id)
+        $body = "{ `"id`": `"$roleId`", `"principalId`": `"$($userResult.Id)`", `"resourceId`": `"$resourceId`" }"
         $result = Invoke-RestMethod -Method "POST" -Uri $uri -Headers @{"Authorization"=$header;"Content-Type"="application/json"} -Body $body -ErrorAction SilentlyContinue
         if ($result -eq $null)
         {
@@ -1108,14 +1183,15 @@ Function UpdateAadApp($tenantId)
         }
         else
         {
-            Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Successfully created 'Service Principal' app role assignment for user '{0}' for application '{1}' with appID '{2}''" -f $authResult.UserInfo.UniqueId,$result.resourceDisplayName, $applicationId)
+            Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - Successfully created 'Service Principal' app role assignment for user '{0}' for application '{1}' with appID '{2}''" -f $userResult.Id,$result.resourceDisplayName, $applicationId)
         }
     }
     else
     {
-        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - User with Id '{0}' has role 'Service Principal' already assigned for the application '{1}' with appID '{2}'" -f $authResult.UserInfo.UniqueId,$result.resourceDisplayName, $applicationId)
+        Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - User with Id '{0}' has role 'Service Principal' already assigned for the application '{1}' with appID '{2}'" -f $userResult.Id,$result.resourceDisplayName, $applicationId)
     }
 }
+
 
 Function InitializeDeploymentSettings()
 {
@@ -2022,16 +2098,16 @@ function SimulationBuildScripts
 
 Function GetOwnerObjectId()
 {
-    $result = (Get-AzureRmADUser -UPN $script:AzureAccountName).Id
+    $result = (Get-AzureRmADUser -UserPrincipalName $script:AzureAccountOwnerName).Id
     if ([string]::IsNullOrEmpty($result))
     {
         # find owner in the subscription directory
-        $searchuser = ($script:AzureAccountName -replace '@','_') + '#EXT#*'
+        $searchuser = ($script:AzureAccountOwnerName -replace '@','_') + '#EXT#*'
         $result = (Get-AzureRmAdUser | Where-Object {($_.UserPrincipalName -like $searchuser)}).Id
         if ([string]::IsNullOrEmpty($result))
         {
             # not found, but fill with UPN to avoid deployment error
-            $result = $script:AzureAccountName
+            $result = $script:AzureAccountOwnerName
             Write-Output ("$(Get-Date –f $TIME_STAMP_FORMAT) - Owner {0} object id not found" -f $result);
         }
     }
@@ -2214,13 +2290,13 @@ Write-Output "DeploymentName ######$script:DeploymentName#######"
 Write-Output "AzureEnvironmentName ######$script:AzureEnvironmentName#######"
 Write-Output "IsLowCost ######$script:IsLowCost#######"
 Write-Output "IsForce ######$script:IsForce#######"
-Write-Output "PresetAzureAccountName ######$script:PresetAzureAccountName#######"
+Write-Output "ServicePrincipalId ######$script:ServicePrincipalId#######"
 Write-Output "PresetAzureSubscriptionName ######$script:PresetAzureSubscriptionName#######"
 Write-Output "PresetAzureLocationName ######$script:PresetAzureLocationName#######"
 Write-Output "PresetAzureDirectoryName ######$script:PresetAzureDirectoryName#######"
 Write-Output "VmAdminPassword ######$script:VmAdminPassword#######"
 Write-Output "BuildRepositoryLocalPath ######$script:BuildRepositoryLocalPath#######"
-Write-Output "PresetAzureAccountPassword ######$script:PresetAzureAccountPassword#######"
+Write-Output "ServicePrincipalPassword ######$script:ServicePrincipalPassword#######"
 
 $LowCost = $false
 $Force = $true
@@ -2321,7 +2397,7 @@ $script:DockerPublisherVersion = "2.1.1"
 $script:UaSecretBaseName = "UAWebClient"
 # Note: The password could only be changed if it is synced with the password used in CreateCerts.exe
 $script:UaSecretPassword = "password"
-$script:SubscriptionDataFile = "{0}/{1}-{2}-credentials.publishsettings" -f $script:IoTSuiteRootPath, $script:PresetAzureAccountName, $script:PresetAzureSubscriptionName
+$script:SubscriptionDataFile = "{0}/{1}-{2}-credentials.publishsettings" -f $script:IoTSuiteRootPath, $script:ServicePrincipalId, $script:PresetAzureSubscriptionName
 $script:TemplateParameteLocalFile = "$script:IoTSuiteRootPath\ArmParameter.json"
 
 $script:AzureEnvironment = Get-AzureEnvironment $script:AzureEnvironmentName
@@ -2357,7 +2433,7 @@ $script:UaSecretThumbprint = $script:X509Collection.ThumbPrint
 Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - X509 certificate for OPC UA communication has thumbprint: $script:UaSecretThumbprint"
 $script:UaSecretForWebsiteEncoded = [System.Convert]::ToBase64String($script:X509Collection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12))
 $script:UaSecretForVmEncoded = [System.Convert]::ToBase64String($script:X509Collection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert, $script:UaSecretPassword))
-$script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "be4baceb-25a1-4b6b-bde8-eb7122183185"
+$script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd"
 if ($script:WebSitesServicePrincipal -eq $null)
 {
     Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Microsoft.Web serivce principal unknown. Registering Microsoft.Web for the subscription."
@@ -2367,7 +2443,7 @@ if ($script:WebSitesServicePrincipal -eq $null)
     {
 		Write-Verbose "$(Get-Date –f $TIME_STAMP_FORMAT) - Creation of the ServicePrincipal for resource provider for Microsoft.Web Trial No: $script:maxTries"
         sleep $SECONDS_TO_SLEEP
-        $script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "be4baceb-25a1-4b6b-bde8-eb7122183185"
+        $script:WebSitesServicePrincipal = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd"
         if ($script:maxTries-- -le 0)
         {
             Write-Error ("$(Get-Date –f $TIME_STAMP_FORMAT) - Timed out while waiting for creation of the ServicePrincipal for resource provider for Microsoft.Web.")
@@ -2392,6 +2468,7 @@ $script:ArmParameter += @{ `
     storageKind = $script:StorageKind; `
     storageEndpointSuffix = $script:AzureEnvironment.StorageEndpointSuffix; `
     aadTenant = $script:AadTenant; `
+	aadClientId = $script:AadClientId; `
     aadInstance = $($script:AzureEnvironment.ActiveDirectoryAuthority + "{0}"); `
     webPlanSkuName = $script:WebPlanSkuName; `
     webPlanWorkerSize = $script:WebPlanWorkerSize; `
@@ -2446,6 +2523,16 @@ Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Deployment template file: $scr
 
 Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - Provisioning resources, if this is the first time, this operation can take up 10 minutes..."
 Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - ARM parameters:")
+
+Write-Output "$(Get-Date –f $TIME_STAMP_FORMAT) - ARM PARAMETERS:"
+foreach ($script:ArmParameterKey in $script:ArmParameter.Keys) 
+{
+    Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) - ARM Parameter '$($script:ArmParameterKey)' for deployment has value '$($script:ArmParameter[$script:ArmParameterKey])'")
+}
+#abfa0a7c-a6b6-4736-8310-5855508787cd
+#"6a0fabaf-3938-4064-a097-c7e248991fe8"
+Set-AzureRmKeyVaultAccessPolicy -VaultName connectedfaqyrmipbpcqyxc -ServicePrincipalName abfa0a7c-a6b6-4736-8310-5855508787cd -PermissionsToSecrets get
+
 $script:ArmResult = New-AzureRmResourceGroupDeployment -ResourceGroupName $script:ResourceGroupName -TemplateUri $script:TemplateUri -TemplateParameterObject $script:ArmParameter -Verbose
 if ($script:ArmResult.ProvisioningState -ne "Succeeded")
 {
