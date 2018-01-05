@@ -100,7 +100,7 @@ Function AddAzureContext()
 {
 	$password = ConvertTo-SecureString $script:ServicePrincipalPassword -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($script:ServicePrincipalId, $password)
-	$account = Add-AzureRmAccount -ServicePrincipal -Environment $script:AzureEnvironment.Name -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
+	$account = Add-AzureRmAccount -ServicePrincipal -EnvironmentName $script:AzureEnvironment.Name -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
 	Select-AzureRmSubscription -SubscriptionName $account.Context.Subscription.Name
 	Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) Subscription used '{0}'" -f $account.Context.Subscription.Id)
 	return $account.Context
@@ -809,7 +809,7 @@ Function AddAzureAccount()
 	$accountName = $ServicePrincipalId
 	$password = ConvertTo-SecureString $ServicePrincipalPassword -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($accountName, $password)
-	$account = Add-AzureRmAccount -ServicePrincipal -Environment $script:AzureEnvironment.Name -Credential $credential -TenantId $script:AzureTenantId #-Subscription $script:PresetAzureSubscriptionName
+	$account = Add-AzureRmAccount -ServicePrincipal -EnvironmentName $script:AzureEnvironment.Name -Credential $credential -TenantId $script:AzureTenantId #-Subscription $script:PresetAzureSubscriptionName
 	
 	#$account = Add-AzureAccount -Environment $script:AzureEnvironment.Name -SubscriptionDataFile $script:SubscriptionDataFile
 	#$credential = GetAzureAccountCredential

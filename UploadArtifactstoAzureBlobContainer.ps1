@@ -25,7 +25,7 @@ Function AddAzureContext()
 {
 	$password = ConvertTo-SecureString $script:ServicePrincipalPassword -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($script:ServicePrincipalId, $password)
-	$account = Add-AzureRmAccount -ServicePrincipal -Environment $script:AzureEnvironment.Name -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
+	$account = Add-AzureRmAccount -ServicePrincipal -EnvironmentName $script:AzureEnvironment.Name -Credential $credential -SubscriptionId $script:AzureSubscriptionId -TenantId $script:AzureTenantId
 	Select-AzureRmSubscription -SubscriptionName $account.Context.Subscription.Name
 	Write-Verbose ("$(Get-Date –f $TIME_STAMP_FORMAT) Subscription used '{0}'" -f $account.Context.Subscription.Id)
 	return $account.Context
@@ -320,10 +320,10 @@ $script:IotSuiteVersion = Get-Content ("{0}/VERSION.txt" -f $script:IoTSuiteRoot
 $script:SimulationPath = "$script:IoTSuiteRootPath/Simulation"
 $script:SimulationBuildOutputPath = "$script:SimulationPath/Factory/buildOutput"
 $script:SimulationBuildOutputInitScript = "$script:SimulationBuildOutputPath/initsimulation"
-if ((Get-AzureRMEnvironment AzureCloud) -eq $null)
+if ((Get-AzureRMEnvironment "AzureCloud") -eq $null)
 {
     Write-Verbose  "$(Get-Date –f $TIME_STAMP_FORMAT) - Can not find AzureCloud environment. Adding it."
-    Add-AzureRMEnvironment –Name AzureCloud -EnableAdfsAuthentication $False -ActiveDirectoryServiceEndpointResourceId https://management.core.windows.net/ -GalleryUrl https://gallery.azure.com/ -ServiceManagementUrl https://management.core.windows.net/ -SqlDatabaseDnsSuffix .database.windows.net -StorageEndpointSuffix core.windows.net -ActiveDirectoryAuthority https://login.microsoftonline.com/ -GraphUrl https://graph.windows.net/ -trafficManagerDnsSuffix trafficmanager.net -AzureKeyVaultDnsSuffix vault.azure.net -AzureKeyVaultServiceEndpointResourceId https://vault.azure.net -ResourceManagerUrl https://management.azure.com/ -ManagementPortalUrl http://go.microsoft.com/fwlink/?LinkId=254433
+    Add-AzureRMEnvironment –Name "AzureCloud" -EnableAdfsAuthentication $False -ActiveDirectoryServiceEndpointResourceId https://management.core.windows.net/ -GalleryUrl https://gallery.azure.com/ -ServiceManagementUrl https://management.core.windows.net/ -SqlDatabaseDnsSuffix .database.windows.net -StorageEndpointSuffix core.windows.net -ActiveDirectoryAuthority https://login.microsoftonline.com/ -GraphUrl https://graph.windows.net/ -trafficManagerDnsSuffix trafficmanager.net -AzureKeyVaultDnsSuffix vault.azure.net -AzureKeyVaultServiceEndpointResourceId https://vault.azure.net -ResourceManagerUrl https://management.azure.com/ -ManagementPortalUrl http://go.microsoft.com/fwlink/?LinkId=254433
 }
 
 # Initialize public cloud suffixes.
