@@ -2531,7 +2531,7 @@ foreach ($script:ArmParameterKey in $script:ArmParameter.Keys)
 }
 #abfa0a7c-a6b6-4736-8310-5855508787cd
 #"6a0fabaf-3938-4064-a097-c7e248991fe8"
-Set-AzureRmKeyVaultAccessPolicy -VaultName connectedfaqyrmipbpcqyxc -ServicePrincipalName abfa0a7c-a6b6-4736-8310-5855508787cd -PermissionsToSecrets get
+#Set-AzureRmKeyVaultAccessPolicy -VaultName connectedfaqyrmipbpcqyxc -ServicePrincipalName abfa0a7c-a6b6-4736-8310-5855508787cd -PermissionsToSecrets get
 
 $script:ArmResult = New-AzureRmResourceGroupDeployment -ResourceGroupName $script:ResourceGroupName -TemplateUri $script:TemplateUri -TemplateParameterObject $script:ArmParameter -Verbose
 if ($script:ArmResult.ProvisioningState -ne "Succeeded")
