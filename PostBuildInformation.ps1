@@ -12,6 +12,7 @@ Param(
 	[Parameter(Mandatory=$false, HelpMessage="Specify the Build template parameter file uri.")]
 	[string] $TemplateParameterUri=""
 )
+#-BuildRequestId "$Env:BuildRequestId" -BuildId "$Env:BuildId" -Status "1" -Description "" -TemplateUri "$Env:TemplateUri" -TemplateParameterUri "$Env:TemplateParameterUri"
 $uri="http://api-ondemanddemo.azurewebsites.net/api/builds/"+$BuildRequestId;
 $qry=@{"Status"=$Status;"Description"=$Description;"VSTSBuildId"=$BuildId;"TemplateUri"=$TemplateUri;"TemplateParameterUri"=$TemplateParameterUri};
 $json=$qry|ConvertTo-Json;
