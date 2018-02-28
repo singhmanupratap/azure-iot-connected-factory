@@ -20,7 +20,7 @@ Param(
 	[string] $PresetAzureLocationName="West Europe"
 )
 #Import-Module "C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory\UploadArtifactstoAzureBlobContainer.ps1" -ArgumentList 'C:\Users\manu.a.pratap.singh\Source\Repos\azure-iot-connected-factory','myfactories','AzureCloud','Aditya@manuapratapsinghaccenture.onmicrosoft.com','man5480U#','54ecce53-5b7e-4faa-870c-ac479b0b83d7','3a8245c0-3fee-45f8-b985-3b71f26ebe84','West Europe'
-
+#-BuildRepositoryLocalPath "$Env:BuildRepositoryLocalPath" -DeploymentName "$Env:DeploymentName" -AzureEnvironmentName "$Env:AzureEnvironmentName" -ServicePrincipalId "$Env:ServicePrincipalId" -ServicePrincipalPassword "$Env:ServicePrincipalPassword" -AzureSubscriptionId "$Env:AzureSubscriptionId" -AzureTenantId "$Env:AzureTenantId" -PresetAzureLocationName "$Env:PresetAzureLocationName"
 Function AddAzureContext()
 {
 	$password = ConvertTo-SecureString $script:ServicePrincipalPassword -AsPlainText -Force
